@@ -143,7 +143,7 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
 
                   return (
                     <td key={cellIndex} className="px-2 py-2 text-center">
-                      {cell && visible ? (
+                      {!cell ? null : visible ? (
                         <span>
                           {cell.home_goals}-{cell.away_goals}
                           {started && cell.points > 0 && (
@@ -153,7 +153,7 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
                           )}
                         </span>
                       ) : (
-                        <span className="text-zinc-300">—</span>
+                        <span className="font-medium text-zinc-900">—</span>
                       )}
                     </td>
                   );
