@@ -5,6 +5,7 @@ import {
   buildInviteUrl,
   buildMailtoLink,
 } from "@/lib/groups/invite-links";
+import { InviteRevokeForm } from "@/components/invite-revoke-form";
 import {
   inviteToGroup,
   type GroupActionState,
@@ -87,7 +88,7 @@ export function InviteForm({ groupId, groupName, invitations }: InviteFormProps)
               >
                 <p className="font-medium text-zinc-900">{invite.email}</p>
                 <p className="mt-2 break-all text-zinc-600">{inviteUrl}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   <a
                     href={mailto}
                     className="rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-50"
@@ -101,6 +102,7 @@ export function InviteForm({ groupId, groupName, invitations }: InviteFormProps)
                   >
                     Kopeeri link
                   </button>
+                  <InviteRevokeForm groupId={groupId} invitationId={invite.id} />
                 </div>
               </div>
             );

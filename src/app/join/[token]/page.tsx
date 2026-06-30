@@ -27,6 +27,15 @@ export default async function JoinPage({ params }: JoinPageProps) {
 
   const isExpired = new Date(invitation.expires_at) < new Date();
   const isPending = invitation.status === "pending";
+  const isRevoked = invitation.status === "revoked";
+  const canJoin = isPending && !isExpired && !isRevoked;
+
+  function invalidInviteMessage() {
+    if (isRevoked || isExpired) {
+      return "See kutse on aegunud. Küsi adminilt uut kutset.";
+    }
+    return "See kutse on juba kasutatud.";
+  }
 
   return (
     <div className="flex min-h-full flex-1 items-center justify-center bg-zinc-50 px-4 py-12">
@@ -41,11 +50,9 @@ export default async function JoinPage({ params }: JoinPageProps) {
           <p className="mt-2 text-sm text-zinc-500">{invitation.tournament_name}</p>
         </div>
 
-        {!isPending || isExpired ? (
+        {!canJoin ? (
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-            {isExpired
-              ? "See kutse on aegunud. Küsi adminilt uut kutset."
-              : "See kutse on juba kasutatud."}
+            {invalidInviteMessage()}
           </p>
         ) : !profile ? (
           <div className="space-y-4">

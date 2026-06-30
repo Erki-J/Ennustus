@@ -152,6 +152,30 @@ export async function acceptInvitation(
   redirect(`/groups/${groupId}`);
 }
 
+export async function revokeInvitation(
+  _prevState: GroupActionState,
+  formData: FormData,
+): Promise<GroupActionState> {
+  const groupId = String(formData.get("group_id") ?? "").trim();
+  const invitationId = String(formData.get("invitation_id") ?? "").trim();
+
+  if (!groupId || !invitationId) {
+    return { error: "Kutse puudub." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("revoke_group_invitation", {
+    p_invitation_id: invitationId,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/groups/${groupId}`);
+  return { success: "Kutse kustutatud." };
+}
+
 export async function updateMyNickname(
   _prevState: GroupActionState,
   formData: FormData,
