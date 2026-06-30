@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JoinGroupForm } from "@/components/join-group-form";
-import { getProfile } from "@/lib/auth/get-profile";
+import { getAuthUserEmail } from "@/lib/auth/get-auth-email";
 import { getInvitationByToken } from "@/lib/groups/queries";
 
 type JoinPageProps = {
@@ -16,7 +16,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
     notFound();
   }
 
-  const profile = await getProfile();
+  const loggedInEmail = await getAuthUserEmail();
   const joinPath = `/join/${token}`;
   const authQuery = new URLSearchParams({
     next: joinPath,
@@ -54,7 +54,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
             {invalidInviteMessage()}
           </p>
-        ) : !profile ? (
+        ) : !loggedInEmail ? (
           <div className="space-y-4">
             <p className="text-sm text-zinc-600">
               Kutse on saadetud aadressile{" "}
@@ -74,10 +74,10 @@ export default async function JoinPage({ params }: JoinPageProps) {
               Logi sisse
             </Link>
           </div>
-        ) : profile.email.toLowerCase() !== invitation.email.toLowerCase() ? (
+        ) : loggedInEmail.toLowerCase() !== invitation.email.toLowerCase() ? (
           <div className="space-y-3">
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              Oled sisse logitud kui {profile.email}, aga kutse on saadetud
+              Oled sisse logitud kui {loggedInEmail}, aga kutse on saadetud
               aadressile {invitation.email}. Logi välja ja kasuta õige e-mailiga
               kontot.
             </p>

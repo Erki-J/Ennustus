@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { GroupWithMeta, InvitationPreview, Tournament } from "@/types/database";
+import type { GroupWithMeta, InvitationPreview, PendingInvitation, Tournament } from "@/types/database";
 
 export async function getActiveTournaments(): Promise<Tournament[]> {
   const supabase = await createClient();
@@ -163,4 +163,15 @@ export async function getInvitationByToken(
   }
 
   return data[0] as InvitationPreview;
+}
+
+export async function getMyPendingInvitations(): Promise<PendingInvitation[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_my_pending_invitations");
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data as PendingInvitation[];
 }

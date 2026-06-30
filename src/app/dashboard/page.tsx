@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { GroupCard } from "@/components/group-card";
 import { getProfile } from "@/lib/auth/get-profile";
-import { getMyGroups } from "@/lib/groups/queries";
+import { getMyGroups, getMyPendingInvitations } from "@/lib/groups/queries";
 
 export default async function DashboardPage() {
   const profile = await getProfile();
@@ -13,6 +13,7 @@ export default async function DashboardPage() {
   }
 
   const groups = await getMyGroups();
+  const pendingInvites = await getMyPendingInvitations();
 
   return (
     <div className="min-h-full bg-zinc-50">
@@ -32,6 +33,34 @@ export default async function DashboardPage() {
             Loo uus ennustus
           </Link>
         </section>
+
+        {pendingInvites.length > 0 && (
+          <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+            <h2 className="font-semibold text-zinc-900">Sul on ootel kutseid</h2>
+            <ul className="mt-4 space-y-3">
+              {pendingInvites.map((invite) => (
+                <li
+                  key={invite.id}
+                  className="flex flex-col gap-3 rounded-xl border border-emerald-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-medium text-zinc-900">{invite.group_name}</p>
+                    <p className="text-sm text-zinc-500">{invite.tournament_name}</p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      Kutse aadressile {invite.email}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/join/${invite.token}`}
+                    className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                  >
+                    Liitu grupiga
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {groups.length === 0 ? (
           <section className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center">

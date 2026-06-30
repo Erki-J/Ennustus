@@ -70,6 +70,16 @@ export type InvitationPreview = {
   expires_at: string;
 };
 
+export type PendingInvitation = {
+  id: string;
+  group_id: string;
+  group_name: string;
+  tournament_name: string;
+  email: string;
+  token: string;
+  expires_at: string;
+};
+
 export type MatchStatus = "scheduled" | "live" | "finished";
 
 export type Match = {

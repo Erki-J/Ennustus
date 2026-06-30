@@ -113,6 +113,7 @@ export async function inviteToGroup(
       email,
       invited_by: user.id,
       status: "pending" as const,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     })),
     { onConflict: "group_id,email" },
   );
