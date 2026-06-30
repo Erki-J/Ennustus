@@ -4,14 +4,11 @@ import {
   getGroupMatchdays,
   resolveMatchdayRound,
 } from "@/lib/matchdays/queries";
+import type { MatchPredictionCell } from "@/lib/predictions/display";
 import { createClient } from "@/lib/supabase/server";
 import type { Match } from "@/types/database";
 
-export type OverviewCell = {
-  home_goals: number;
-  away_goals: number;
-  points: number;
-} | null;
+export type OverviewCell = MatchPredictionCell;
 
 export type OverviewRow = {
   user_id: string;
@@ -46,25 +43,41 @@ export async function getMatchdayOverview(groupId: string, roundKey?: string) {
   const matches = round.matches as Match[];
   const matchIds = matches.map((match) => match.id);
 
+  const now = Date.now();
+  const startedMatchIds = new Set(
+    matches
+      .filter((match) => new Date(match.kickoff_at).getTime() <= now)
+      .map((match) => match.id),
+  );
+
   const { data: members } = await supabase
     .from("group_members")
     .select("user_id, nickname")
     .eq("group_id", groupId)
     .order("nickname");
 
-  const { data: roundPredictions } = await supabase
-    .from("match_predictions")
-    .select("user_id, match_id, home_goals, away_goals, points")
-    .eq("group_id", groupId)
-    .in("match_id", matchIds);
+  const { data: roundPredictions } = await supabase.rpc("get_overview_round_predictions", {
+    p_group_id: groupId,
+    p_match_ids: matchIds,
+  });
 
-  const { data: allPredictions } = await supabase
-    .from("match_predictions")
-    .select("user_id, points")
-    .eq("group_id", groupId);
+  const { data: matchPointTotals } = await supabase.rpc("get_overview_match_point_totals", {
+    p_group_id: groupId,
+  });
 
-  const predictionMap = new Map<string, OverviewCell>();
-  for (const prediction of roundPredictions ?? []) {
+  type PredictionRow = {
+    user_id: string;
+    match_id: string;
+    home_goals: number | null;
+    away_goals: number | null;
+    points: number;
+  };
+
+  const predictionMap = new Map<
+    string,
+    { home_goals: number | null; away_goals: number | null; points: number }
+  >();
+  for (const prediction of (roundPredictions ?? []) as PredictionRow[]) {
     predictionMap.set(`${prediction.user_id}:${prediction.match_id}`, {
       home_goals: prediction.home_goals,
       away_goals: prediction.away_goals,
@@ -73,23 +86,36 @@ export async function getMatchdayOverview(groupId: string, roundKey?: string) {
   }
 
   const matchTotals = new Map<string, number>();
-  for (const prediction of allPredictions ?? []) {
-    matchTotals.set(
-      prediction.user_id,
-      (matchTotals.get(prediction.user_id) ?? 0) + prediction.points,
-    );
+  for (const row of matchPointTotals ?? []) {
+    matchTotals.set(row.user_id, row.total_points);
   }
 
   const bonusTotals = await getBonusPointsByUser(groupId);
 
   const rows: OverviewRow[] = (members ?? []).map((member) => {
-    const cells = matches.map(
-      (match) => predictionMap.get(`${member.user_id}:${match.id}`) ?? null,
-    );
-    const round_points = cells.reduce(
-      (sum, cell) => sum + (cell?.points ?? 0),
-      0,
-    );
+    const cells: MatchPredictionCell[] = matches.map((match) => {
+      const prediction = predictionMap.get(`${member.user_id}:${match.id}`);
+      if (!prediction) {
+        return null;
+      }
+
+      if (!startedMatchIds.has(match.id)) {
+        return { pending: true };
+      }
+
+      return {
+        home_goals: prediction.home_goals ?? 0,
+        away_goals: prediction.away_goals ?? 0,
+        points: prediction.points,
+      };
+    });
+
+    const round_points = cells.reduce((sum, cell) => {
+      if (!cell || "pending" in cell) {
+        return sum;
+      }
+      return sum + cell.points;
+    }, 0);
     const bonus_points = bonusTotals.get(member.user_id) ?? 0;
     const total_points = (matchTotals.get(member.user_id) ?? 0) + bonus_points;
 
@@ -104,13 +130,6 @@ export async function getMatchdayOverview(groupId: string, roundKey?: string) {
   });
 
   rows.sort((a, b) => b.total_points - a.total_points);
-
-  const now = Date.now();
-  const startedMatchIds = new Set(
-    matches
-      .filter((match) => new Date(match.kickoff_at).getTime() <= now)
-      .map((match) => match.id),
-  );
 
   return { context, rounds, round, rows, startedMatchIds };
 }

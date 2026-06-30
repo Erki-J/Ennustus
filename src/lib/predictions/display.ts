@@ -1,8 +1,11 @@
-export type MatchPredictionCell = {
-  home_goals: number;
-  away_goals: number;
-  points: number;
-} | null;
+export type MatchPredictionCell =
+  | null
+  | { pending: true }
+  | {
+      home_goals: number;
+      away_goals: number;
+      points: number;
+    };
 
 export type MatchPredictionCellDisplay =
   | { kind: "empty" }
@@ -22,7 +25,7 @@ export function getMatchPredictionCellDisplay(
     return { kind: "empty" };
   }
 
-  if (!matchStarted) {
+  if ("pending" in cell || !matchStarted) {
     return { kind: "hidden" };
   }
 
