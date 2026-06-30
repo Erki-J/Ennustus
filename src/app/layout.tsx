@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Ennustamine",
   description: "MM ja EM ennustusmäng",
+  applicationName: "Ennustamine",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Ennustamine",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#059669",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

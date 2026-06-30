@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { GroupCard } from "@/components/group-card";
+import { InstallAppBanner } from "@/components/install-app-banner";
 import { getProfile } from "@/lib/auth/get-profile";
 import { getMyGroups, getMyPendingInvitations } from "@/lib/groups/queries";
 
@@ -33,6 +34,8 @@ export default async function DashboardPage() {
             Loo uus ennustus
           </Link>
         </section>
+
+        <InstallAppBanner />
 
         {pendingInvites.length > 0 && (
           <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
