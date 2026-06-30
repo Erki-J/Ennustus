@@ -1,0 +1,2 @@
+/** Kicktipp-stiilis rõhutus sisselogitud kasutaja reale */
+export const OWN_ROW_CLASS = "bg-yellow-200";
