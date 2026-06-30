@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { MatchdayNav } from "@/components/matchday-nav";
+import { OverviewPredictionCell } from "@/components/overview/prediction-cell";
 import { getProfile } from "@/lib/auth/get-profile";
 import { getMatchdayOverview } from "@/lib/overview/queries";
 import { formatMatchScore } from "@/lib/scoring/calculate";
@@ -138,23 +139,10 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
                 {row.cells.map((cell, cellIndex) => {
                   const match = matches[cellIndex];
                   const started = startedMatchIds.has(match.id);
-                  const isOwn = row.user_id === context.userId;
-                  const visible = started || isOwn;
 
                   return (
                     <td key={cellIndex} className="px-2 py-2 text-center">
-                      {!cell ? null : visible ? (
-                        <span>
-                          {cell.home_goals}-{cell.away_goals}
-                          {started && cell.points > 0 && (
-                            <sub className="ml-0.5 font-semibold text-emerald-700">
-                              {cell.points}
-                            </sub>
-                          )}
-                        </span>
-                      ) : (
-                        <span className="font-medium text-zinc-900">—</span>
-                      )}
+                      <OverviewPredictionCell cell={cell} matchStarted={started} />
                     </td>
                   );
                 })}
