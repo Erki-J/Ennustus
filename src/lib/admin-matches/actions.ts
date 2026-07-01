@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 function matchesRoundPath(groupId: string, roundKey: string) {
-  return `/groups/${groupId}/settings/matches/${roundKey}`;
+  return `/groups/${groupId}/matches/${roundKey}`;
 }
 
 function redirectToMatchesRound(
@@ -29,7 +29,7 @@ function revalidateGroupModules(groupId: string, roundKey: string) {
   revalidatePath(`/groups/${groupId}/prediction-centre`);
   revalidatePath(`/groups/${groupId}/overview/bonus`);
   revalidatePath(`/groups/${groupId}/general-overview`);
-  revalidatePath(`/groups/${groupId}/settings/matches`);
+  revalidatePath(`/groups/${groupId}/matches`);
   revalidatePath(matchesRoundPath(groupId, roundKey));
   revalidatePath(`/groups/${groupId}`);
 }

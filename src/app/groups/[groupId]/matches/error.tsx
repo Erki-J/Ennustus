@@ -1,6 +1,6 @@
 "use client";
 
-export default function SettingsMatchesError({
+export default function MatchesError({
   error,
   reset,
 }: {

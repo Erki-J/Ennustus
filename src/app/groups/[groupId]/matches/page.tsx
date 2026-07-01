@@ -4,11 +4,11 @@ import {
   getGroupMatchdays,
 } from "@/lib/matchdays/queries";
 
-type SettingsMatchesPageProps = {
+type MatchesPageProps = {
   params: Promise<{ groupId: string }>;
 };
 
-export default async function SettingsMatchesPage({ params }: SettingsMatchesPageProps) {
+export default async function MatchesPage({ params }: MatchesPageProps) {
   const { groupId } = await params;
   const { rounds } = await getGroupMatchdays(groupId);
 
@@ -22,5 +22,5 @@ export default async function SettingsMatchesPage({ params }: SettingsMatchesPag
   }
 
   const active = getActiveMatchdayRound(rounds);
-  redirect(`/groups/${groupId}/settings/matches/${active.key}`);
+  redirect(`/groups/${groupId}/matches/${active.key}`);
 }

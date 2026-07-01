@@ -13,6 +13,7 @@ const linkClass = (active: boolean) =>
 export function GroupNavLinks({ groupId, isAdmin }: { groupId: string; isAdmin: boolean }) {
   const pathname = usePathname();
   const base = `/groups/${groupId}`;
+  const matchesHref = `${base}/matches`;
   const settingsHref = `${base}/settings`;
 
   const mainItems = [
@@ -37,6 +38,7 @@ export function GroupNavLinks({ groupId, isAdmin }: { groupId: string; isAdmin: 
     return pathname.startsWith(href);
   }
 
+  const matchesActive = pathname.startsWith(matchesHref);
   const settingsActive = pathname.startsWith(settingsHref);
 
   return (
@@ -48,12 +50,17 @@ export function GroupNavLinks({ groupId, isAdmin }: { groupId: string; isAdmin: 
       ))}
 
       {isAdmin && (
-        <Link
-          href={`${settingsHref}/scoring`}
-          className={linkClass(settingsActive)}
-        >
-          Seaded
-        </Link>
+        <>
+          <Link href={matchesHref} className={linkClass(matchesActive)}>
+            Mängude tulemused
+          </Link>
+          <Link
+            href={`${settingsHref}/scoring`}
+            className={linkClass(settingsActive)}
+          >
+            Seaded
+          </Link>
+        </>
       )}
     </nav>
   );

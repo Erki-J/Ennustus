@@ -3,15 +3,15 @@ import { AdminMatchResultForm } from "@/components/admin-matches/result-form";
 import { MatchdayNav } from "@/components/matchday-nav";
 import { getGroupMatchdays } from "@/lib/matchdays/queries";
 
-type SettingsMatchesRoundPageProps = {
+type MatchesRoundPageProps = {
   params: Promise<{ groupId: string; roundKey: string }>;
   searchParams: Promise<{ error?: string; success?: string }>;
 };
 
-export default async function SettingsMatchesRoundPage({
+export default async function MatchesRoundPage({
   params,
   searchParams,
-}: SettingsMatchesRoundPageProps) {
+}: MatchesRoundPageProps) {
   const { groupId, roundKey } = await params;
   const { error, success } = await searchParams;
   const { rounds } = await getGroupMatchdays(groupId);
@@ -37,7 +37,7 @@ export default async function SettingsMatchesRoundPage({
           </p>
         </div>
         <MatchdayNav
-          basePath={`/groups/${groupId}/settings/matches`}
+          basePath={`/groups/${groupId}/matches`}
           rounds={rounds}
           currentKey={round.key}
         />

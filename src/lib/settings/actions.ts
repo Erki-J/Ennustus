@@ -21,7 +21,7 @@ function revalidateGroupModules(groupId: string) {
     `/groups/${groupId}/settings/scoring`,
     `/groups/${groupId}/settings/bonus`,
     `/groups/${groupId}/settings/predictions`,
-    `/groups/${groupId}/settings/matches`,
+    `/groups/${groupId}/matches`,
     `/groups/${groupId}`,
   ];
   for (const path of paths) {

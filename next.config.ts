@@ -20,7 +20,17 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/groups/:groupId/admin/matches",
-        destination: "/groups/:groupId/settings/matches",
+        destination: "/groups/:groupId/matches",
+        permanent: true,
+      },
+      {
+        source: "/groups/:groupId/settings/matches",
+        destination: "/groups/:groupId/matches",
+        permanent: true,
+      },
+      {
+        source: "/groups/:groupId/settings/matches/:roundKey",
+        destination: "/groups/:groupId/matches/:roundKey",
         permanent: true,
       },
       {
