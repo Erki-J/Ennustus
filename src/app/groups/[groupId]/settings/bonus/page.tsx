@@ -30,6 +30,7 @@ export default async function SettingsBonusPage({ params }: SettingsBonusPagePro
               groupId={groupId}
               question={question}
               bonusPoints={bonusAdmin.context.scoring.bonus_points ?? 4}
+              teamOptions={bonusAdmin.teamOptions}
             />
           ))}
         </div>

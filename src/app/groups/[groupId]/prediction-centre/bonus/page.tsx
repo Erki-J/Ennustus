@@ -25,6 +25,7 @@ export default async function PredictionCentreBonusPage({
 
   const {
     locked,
+    teamOptions,
     groupWinners,
     tournamentWinner,
     topScorer,
@@ -55,6 +56,7 @@ export default async function PredictionCentreBonusPage({
         groupId={groupId}
         locked={locked}
         bonusPoints={bonus.context.scoring.bonus_points ?? 4}
+        teamOptions={teamOptions}
         groupWinners={groupWinners}
         tournamentWinner={tournamentWinner}
         topScorer={topScorer}

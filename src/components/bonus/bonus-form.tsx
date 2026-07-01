@@ -5,7 +5,12 @@ import {
   saveBonusPredictions,
   type BonusActionState,
 } from "@/lib/bonus/actions";
+import { BonusTeamSelect } from "@/components/bonus/bonus-team-select";
 import type { BonusQuestionWithPrediction } from "@/lib/bonus/queries";
+import {
+  getTeamOptionsForQuestion,
+  type BonusTeamOptions,
+} from "@/lib/bonus/team-options";
 
 const initialState: BonusActionState = {};
 
@@ -13,6 +18,7 @@ type BonusFormProps = {
   groupId: string;
   locked: boolean;
   bonusPoints: number;
+  teamOptions: BonusTeamOptions;
   groupWinners: BonusQuestionWithPrediction[];
   tournamentWinner?: BonusQuestionWithPrediction;
   topScorer?: BonusQuestionWithPrediction;
@@ -23,11 +29,15 @@ function BonusField({
   question,
   locked,
   bonusPoints,
+  teamOptions,
 }: {
   question: BonusQuestionWithPrediction;
   locked: boolean;
   bonusPoints: number;
+  teamOptions: BonusTeamOptions;
 }) {
+  const options = getTeamOptionsForQuestion(question, teamOptions);
+
   if (locked) {
     return (
       <div className="rounded-lg bg-zinc-50 px-3 py-2">
@@ -44,12 +54,10 @@ function BonusField({
         {question.label}{" "}
         <span className="font-normal text-zinc-400">({bonusPoints} p)</span>
       </label>
-      <input
+      <BonusTeamSelect
         name={`question_${question.id}`}
-        type="text"
-        defaultValue={question.my_answer ?? ""}
-        placeholder="Meeskond või mängija"
-        className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+        options={options}
+        defaultValue={question.my_answer}
       />
     </div>
   );
@@ -59,6 +67,7 @@ export function BonusForm({
   groupId,
   locked,
   bonusPoints,
+  teamOptions,
   groupWinners,
   tournamentWinner,
   topScorer,
@@ -88,6 +97,7 @@ export function BonusForm({
               question={question}
               locked={locked}
               bonusPoints={bonusPoints}
+              teamOptions={teamOptions}
             />
           ))}
         </div>
@@ -95,13 +105,23 @@ export function BonusForm({
 
       {tournamentWinner && (
         <section>
-          <BonusField question={tournamentWinner} locked={locked} bonusPoints={bonusPoints} />
+          <BonusField
+            question={tournamentWinner}
+            locked={locked}
+            bonusPoints={bonusPoints}
+            teamOptions={teamOptions}
+          />
         </section>
       )}
 
       {topScorer && (
         <section>
-          <BonusField question={topScorer} locked={locked} bonusPoints={bonusPoints} />
+          <BonusField
+            question={topScorer}
+            locked={locked}
+            bonusPoints={bonusPoints}
+            teamOptions={teamOptions}
+          />
         </section>
       )}
 
@@ -115,6 +135,7 @@ export function BonusForm({
                 question={question}
                 locked={locked}
                 bonusPoints={bonusPoints}
+                teamOptions={teamOptions}
               />
             ))}
           </div>

@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getGroupContext } from "@/lib/groups/context";
+import { fetchBonusTeamOptions } from "@/lib/bonus/team-options.server";
+import type { BonusTeamOptions } from "@/lib/bonus/team-options";
+
+export type { BonusTeamOptions };
 
 export type BonusQuestionType =
   | "group_winner"
@@ -62,6 +66,7 @@ export async function getBonusCentre(groupId: string) {
   }
 
   const locked = await isBonusLocked(group.tournament_id);
+  const teamOptions = await fetchBonusTeamOptions(group.tournament_id);
 
   const { data: questions } = await supabase
     .from("bonus_questions")
@@ -94,6 +99,7 @@ export async function getBonusCentre(groupId: string) {
   return {
     context,
     locked,
+    teamOptions,
     groupWinners: items.filter((item) => item.question_type === "group_winner"),
     tournamentWinner: items.find((item) => item.question_type === "tournament_winner"),
     topScorer: items.find((item) => item.question_type === "top_scorer"),
@@ -243,6 +249,8 @@ export async function getBonusQuestionsForAdmin(groupId: string) {
     return null;
   }
 
+  const teamOptions = await fetchBonusTeamOptions(group.tournament_id);
+
   const { data: questions } = await supabase
     .from("bonus_questions")
     .select(
@@ -253,6 +261,7 @@ export async function getBonusQuestionsForAdmin(groupId: string) {
 
   return {
     context,
+    teamOptions,
     questions: (questions ?? []) as BonusQuestion[],
   };
 }
