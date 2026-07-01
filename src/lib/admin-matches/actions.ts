@@ -12,10 +12,9 @@ export type AdminMatchesActionState = {
 function revalidateGroupModules(groupId: string) {
   revalidatePath(`/groups/${groupId}/overview`);
   revalidatePath(`/groups/${groupId}/prediction-centre`);
-  revalidatePath(`/groups/${groupId}/overview`);
   revalidatePath(`/groups/${groupId}/overview/bonus`);
   revalidatePath(`/groups/${groupId}/general-overview`);
-  revalidatePath(`/groups/${groupId}/settings/matches`);
+  revalidatePath(`/groups/${groupId}/settings/matches`, "layout");
   revalidatePath(`/groups/${groupId}`);
 }
 

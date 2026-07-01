@@ -1,5 +1,8 @@
-import { getPredictionCentreMatches } from "@/lib/prediction-centre/queries";
-import { AdminMatchesResultForm } from "@/components/admin-matches/result-form";
+import { redirect } from "next/navigation";
+import {
+  getActiveMatchdayRound,
+  getGroupMatchdays,
+} from "@/lib/matchdays/queries";
 
 type SettingsMatchesPageProps = {
   params: Promise<{ groupId: string }>;
@@ -7,23 +10,17 @@ type SettingsMatchesPageProps = {
 
 export default async function SettingsMatchesPage({ params }: SettingsMatchesPageProps) {
   const { groupId } = await params;
-  const matches = await getPredictionCentreMatches(groupId);
+  const { rounds } = await getGroupMatchdays(groupId);
 
-  return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-      <h2 className="font-semibold text-zinc-900">Mängude tulemused</h2>
-      <p className="mt-1 text-sm text-zinc-600">
-        Sisesta tegelik skoor — punktid arvutatakse automaatselt uuesti.
-      </p>
-      <div className="mt-4 space-y-3">
-        {matches.length === 0 ? (
-          <p className="text-sm text-zinc-500">Mänge pole lisatud.</p>
-        ) : (
-          matches.map((match) => (
-            <AdminMatchesResultForm key={match.id} groupId={groupId} match={match} />
-          ))
-        )}
-      </div>
-    </section>
-  );
+  if (rounds.length === 0) {
+    return (
+      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="font-semibold text-zinc-900">Mängude tulemused</h2>
+        <p className="mt-4 text-sm text-zinc-500">Selle turniiri mänge pole andmebaasis.</p>
+      </section>
+    );
+  }
+
+  const active = getActiveMatchdayRound(rounds);
+  redirect(`/groups/${groupId}/settings/matches/${active.key}`);
 }
