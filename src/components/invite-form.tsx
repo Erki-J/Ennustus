@@ -98,7 +98,7 @@ export function InviteForm({ groupId, groupName, invitations }: InviteFormProps)
                   <button
                     type="button"
                     onClick={() => navigator.clipboard.writeText(inviteUrl)}
-                    className="rounded-lg bg-white px-3 py-1.5 text-sm text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-100"
+                    className="btn-secondary px-3 py-1.5 text-sm ring-1 ring-zinc-200"
                   >
                     Kopeeri link
                   </button>

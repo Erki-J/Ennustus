@@ -79,7 +79,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
             </Link>
             <Link
               href={loginHref}
-              className="flex w-full items-center justify-center rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              className="btn-secondary flex w-full items-center justify-center px-4 py-2.5 text-sm font-medium"
             >
               Logi sisse
             </Link>

@@ -25,6 +25,22 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+@layer components {
+  .btn-secondary {
+    @apply rounded-lg border border-zinc-300 bg-white text-zinc-700 transition;
+    @apply hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-900;
+  }
+
+  .btn-secondary:disabled {
+    @apply opacity-60;
+  }
+
+  .nav-link-inactive {
+    @apply text-zinc-600 transition;
+    @apply hover:bg-emerald-50 hover:text-emerald-900;
+  }
+}
+
 @media (display-mode: standalone) {
   body {
     padding-top: env(safe-area-inset-top);

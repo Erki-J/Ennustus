@@ -71,7 +71,7 @@ export function RemoveMemberButton({
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={pending}
-                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60"
+                className="btn-secondary px-4 py-2 text-sm font-medium disabled:opacity-60"
               >
                 Tühista
               </button>
