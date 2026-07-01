@@ -112,10 +112,16 @@ export async function getMatchdayOverview(groupId: string, roundKey?: string) {
       };
     });
 
-    const round_points = cells.reduce((sum, cell) => {
+    const round_points = cells.reduce((sum, cell, cellIndex) => {
       if (!cell || "pending" in cell) {
         return sum;
       }
+
+      const match = matches[cellIndex];
+      if (match.home_score === null || match.away_score === null) {
+        return sum;
+      }
+
       return sum + cell.points;
     }, 0);
     const bonus_points = bonusTotals.get(member.user_id) ?? 0;

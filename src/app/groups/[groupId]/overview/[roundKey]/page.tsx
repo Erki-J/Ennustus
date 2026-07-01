@@ -64,51 +64,6 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
       </div>
 
       <div className="overflow-x-auto border-b border-zinc-100">
-        <table className="w-full min-w-[560px] text-left text-sm">
-          <thead className="bg-zinc-50 text-zinc-500">
-            <tr>
-              <th className="px-4 py-2 font-medium">{t("common.date")}</th>
-              <th className="px-4 py-2 font-medium">{t("common.home")}</th>
-              <th className="px-4 py-2 font-medium">{t("common.away")}</th>
-              {showGroupColumn && (
-                <th className="px-4 py-2 font-medium">{t("common.group")}</th>
-              )}
-              <th className="px-4 py-2 font-medium">{t("common.result")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {matches.map((match) => (
-              <tr key={match.id} className="border-t border-zinc-100">
-                <td className="px-4 py-2 text-zinc-600">
-                  {formatDateTime(match.kickoff_at, locale)}
-                </td>
-                <td className="px-4 py-2 font-medium text-zinc-900">
-                  {translateTeamName(match.home_team, locale)}
-                </td>
-                <td className="px-4 py-2 font-medium text-zinc-900">
-                  {translateTeamName(match.away_team, locale)}
-                </td>
-                {showGroupColumn && (
-                  <td className="px-4 py-2 text-zinc-600">
-                    {match.group_code
-                      ? t("predictionCentre.groupCode", { code: match.group_code })
-                      : t("common.dash")}
-                  </td>
-                )}
-                <td
-                  className={`px-4 py-2 font-medium ${getMatchResultColorClass(match.status)}`}
-                >
-                  {match.home_score !== null && match.away_score !== null
-                    ? formatMatchScore(match.home_score, match.away_score)
-                    : t("common.dash")}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-xs">
           <thead className="bg-zinc-50 text-zinc-500">
             <tr>
@@ -176,6 +131,51 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
                   {row.bonus_points || "·"}
                 </td>
                 <td className="px-3 py-2 text-right font-semibold">{row.total_points}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px] text-left text-sm">
+          <thead className="bg-zinc-50 text-zinc-500">
+            <tr>
+              <th className="px-4 py-2 font-medium">{t("common.date")}</th>
+              <th className="px-4 py-2 font-medium">{t("common.home")}</th>
+              <th className="px-4 py-2 font-medium">{t("common.away")}</th>
+              {showGroupColumn && (
+                <th className="px-4 py-2 font-medium">{t("common.group")}</th>
+              )}
+              <th className="px-4 py-2 font-medium">{t("common.result")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {matches.map((match) => (
+              <tr key={match.id} className="border-t border-zinc-100">
+                <td className="px-4 py-2 text-zinc-600">
+                  {formatDateTime(match.kickoff_at, locale)}
+                </td>
+                <td className="px-4 py-2 font-medium text-zinc-900">
+                  {translateTeamName(match.home_team, locale)}
+                </td>
+                <td className="px-4 py-2 font-medium text-zinc-900">
+                  {translateTeamName(match.away_team, locale)}
+                </td>
+                {showGroupColumn && (
+                  <td className="px-4 py-2 text-zinc-600">
+                    {match.group_code
+                      ? t("predictionCentre.groupCode", { code: match.group_code })
+                      : t("common.dash")}
+                  </td>
+                )}
+                <td
+                  className={`px-4 py-2 font-medium ${getMatchResultColorClass(match.status)}`}
+                >
+                  {match.home_score !== null && match.away_score !== null
+                    ? formatMatchScore(match.home_score, match.away_score)
+                    : t("common.dash")}
+                </td>
               </tr>
             ))}
           </tbody>

@@ -253,6 +253,17 @@ export async function runCronSync(): Promise<CronSyncResult> {
     totalLiveUpdated += syncResult.liveUpdated;
     totalScoresUpdated += syncResult.scoresUpdated;
     details.push(...syncResult.details);
+
+    for (const groupId of config.groupIds) {
+      const { error: recalcError } = await admin.rpc("recalculate_group_match_points", {
+        p_group_id: groupId,
+      });
+
+      if (recalcError) {
+        details.push(`Grupp ${groupId}: punktide arvutus — ${recalcError.message}`);
+      }
+    }
+
     tournamentsSynced += 1;
 
     for (const groupId of config.groupIds) {
