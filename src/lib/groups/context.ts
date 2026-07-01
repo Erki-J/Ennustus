@@ -60,6 +60,7 @@ export async function getGroupContext(groupId: string) {
       exact_score: raw?.exact_score ?? 4,
       goal_diff: raw?.goal_diff ?? 3,
       tendency: raw?.tendency ?? 2,
+      draw_points: raw?.draw_points ?? 2,
       bonus_points: raw?.bonus_points ?? 4,
     },
   };

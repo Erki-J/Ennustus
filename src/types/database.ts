@@ -12,6 +12,7 @@ export type ScoringSettings = {
   exact_score: number;
   goal_diff: number;
   tendency: number;
+  draw_points: number;
   bonus_points: number;
 };
 

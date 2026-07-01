@@ -68,11 +68,14 @@ export async function updateGroupScoring(
   const exactScore = Number(formData.get("exact_score"));
   const goalDiff = Number(formData.get("goal_diff"));
   const tendency = Number(formData.get("tendency"));
+  const drawPoints = Number(formData.get("draw_points"));
   const bonusPoints = Number(formData.get("bonus_points"));
 
   if (
     !groupId ||
-    [exactScore, goalDiff, tendency, bonusPoints].some((n) => Number.isNaN(n))
+    [exactScore, goalDiff, tendency, drawPoints, bonusPoints].some((n) =>
+      Number.isNaN(n),
+    )
   ) {
     return { error: "Palun sisesta kehtivad punktid." };
   }
@@ -81,6 +84,7 @@ export async function updateGroupScoring(
     exact_score: exactScore,
     goal_diff: goalDiff,
     tendency: tendency,
+    draw_points: drawPoints,
     bonus_points: bonusPoints,
   };
 
@@ -94,12 +98,26 @@ export async function updateGroupScoring(
     return { error: error.message };
   }
 
-  const { error: recalcError } = await supabase.rpc("recalculate_group_bonus_points", {
-    p_group_id: groupId,
-  });
+  const { error: recalcMatchError } = await supabase.rpc(
+    "recalculate_group_match_points",
+    {
+      p_group_id: groupId,
+    },
+  );
 
-  if (recalcError) {
-    return { error: recalcError.message };
+  if (recalcMatchError) {
+    return { error: recalcMatchError.message };
+  }
+
+  const { error: recalcBonusError } = await supabase.rpc(
+    "recalculate_group_bonus_points",
+    {
+      p_group_id: groupId,
+    },
+  );
+
+  if (recalcBonusError) {
+    return { error: recalcBonusError.message };
   }
 
   revalidateGroupModules(groupId);

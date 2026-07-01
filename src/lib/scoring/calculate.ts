@@ -22,6 +22,10 @@ export function calculatePredictionPoints(
     return scoring.goal_diff;
   }
 
+  if (actualDiff === 0 && predDiff !== 0) {
+    return scoring.draw_points;
+  }
+
   if (Math.sign(predDiff) === Math.sign(actualDiff)) {
     return scoring.tendency;
   }
