@@ -1,4 +1,8 @@
-import type { CronSettings, Match } from "@/types/database";
+import type { CronSettings, Match, MatchStatus } from "@/types/database";
+
+export type CronWindowMatch = Pick<Match, "kickoff_at"> & {
+  status?: MatchStatus;
+};
 
 export function getMatchSyncWindow(
   match: Pick<Match, "kickoff_at">,
@@ -23,19 +27,27 @@ export function getMatchSyncWindow(
 }
 
 export function isMatchInSyncWindow(
-  match: Pick<Match, "kickoff_at">,
+  match: CronWindowMatch,
   cron: Pick<
     CronSettings,
     "window_start" | "match_duration_minutes" | "window_end_offset_minutes"
   >,
   now = Date.now(),
 ) {
+  if (match.status === "finished") {
+    return false;
+  }
+
+  if (match.status === "live") {
+    return true;
+  }
+
   const { startMs, endMs } = getMatchSyncWindow(match, cron);
   return now >= startMs && now <= endMs;
 }
 
 export function countMatchesInSyncWindow(
-  matches: Pick<Match, "kickoff_at">[],
+  matches: CronWindowMatch[],
   cron: Pick<
     CronSettings,
     "window_start" | "match_duration_minutes" | "window_end_offset_minutes"

@@ -12,21 +12,31 @@ export const DEFAULT_CRON_SETTINGS: CronSettings = {
 export function parseCronSettings(raw: unknown): CronSettings {
   const value = (raw ?? {}) as Partial<CronSettings>;
 
+  const readInt = (input: unknown, fallback: number) => {
+    const parsed =
+      typeof input === "number"
+        ? input
+        : typeof input === "string"
+          ? Number(input)
+          : NaN;
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
   return {
     enabled: Boolean(value.enabled),
-    interval_minutes:
-      typeof value.interval_minutes === "number" && value.interval_minutes >= 1
-        ? value.interval_minutes
-        : DEFAULT_CRON_SETTINGS.interval_minutes,
+    interval_minutes: Math.max(
+      1,
+      readInt(value.interval_minutes, DEFAULT_CRON_SETTINGS.interval_minutes),
+    ),
     window_start: "kickoff",
-    match_duration_minutes:
-      typeof value.match_duration_minutes === "number"
-        ? value.match_duration_minutes
-        : DEFAULT_CRON_SETTINGS.match_duration_minutes,
-    window_end_offset_minutes:
-      typeof value.window_end_offset_minutes === "number"
-        ? value.window_end_offset_minutes
-        : DEFAULT_CRON_SETTINGS.window_end_offset_minutes,
+    match_duration_minutes: readInt(
+      value.match_duration_minutes,
+      DEFAULT_CRON_SETTINGS.match_duration_minutes,
+    ),
+    window_end_offset_minutes: readInt(
+      value.window_end_offset_minutes,
+      DEFAULT_CRON_SETTINGS.window_end_offset_minutes,
+    ),
     last_run_at:
       typeof value.last_run_at === "string" ? value.last_run_at : null,
   };

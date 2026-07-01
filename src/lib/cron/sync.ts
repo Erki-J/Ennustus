@@ -1,6 +1,7 @@
 import { parseCronSettings } from "@/lib/cron/settings";
 import {
   countMatchesInSyncWindow,
+  isMatchInSyncWindow,
   shouldRunCronNow,
 } from "@/lib/cron/window";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -225,7 +226,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
     }
 
     const windowMatches = typedMatches.filter((match) =>
-      countMatchesInSyncWindow([match], config.cron, now),
+      isMatchInSyncWindow(match, config.cron, now),
     );
     const syncResult = await syncTournamentMatches(windowMatches);
     totalUpdated += syncResult.updated;
@@ -248,6 +249,19 @@ export async function runCronSync(): Promise<CronSyncResult> {
   };
 }
 
+export function computeCronStatus(
+  matches: Array<Pick<Match, "kickoff_at" | "status">>,
+  cron: CronSettings,
+  now = Date.now(),
+) {
+  const activeCount = countMatchesInSyncWindow(matches, cron, now);
+
+  return {
+    activeCount,
+    nextEligible: shouldRunCronNow(cron, activeCount, now),
+  };
+}
+
 export async function getCronStatus(
   tournamentId: string,
   cron: CronSettings,
@@ -259,18 +273,17 @@ export async function getCronStatus(
     return {
       activeCount: 0,
       nextEligible: false,
+      adminAvailable: false,
     };
   }
 
   const { data: matches } = await admin
     .from("matches")
-    .select("kickoff_at")
+    .select("kickoff_at, status")
     .eq("tournament_id", tournamentId);
 
-  const activeCount = countMatchesInSyncWindow(matches ?? [], cron, now);
-
   return {
-    activeCount,
-    nextEligible: shouldRunCronNow(cron, activeCount, now),
+    ...computeCronStatus((matches ?? []) as Match[], cron, now),
+    adminAvailable: true,
   };
 }

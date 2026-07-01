@@ -14,7 +14,8 @@ import {
 } from "@/lib/matchdays/queries";
 import { getGroupContext } from "@/lib/groups/context";
 import { parseCronSettings } from "@/lib/cron/settings";
-import { getCronStatus } from "@/lib/cron/sync";
+import { computeCronStatus } from "@/lib/cron/sync";
+import type { Match } from "@/types/database";
 import { ADMIN_PREDICTIONS_BONUS_SECTION } from "@/lib/settings/predictions";
 
 export type SettingsActionState = {
@@ -520,7 +521,13 @@ export async function getGroupCronPageData(groupId: string) {
     .single();
 
   const cron = parseCronSettings(settings?.cron);
-  const status = await getCronStatus(group.tournament_id, cron);
+
+  const { data: matches } = await supabase
+    .from("matches")
+    .select("kickoff_at, status")
+    .eq("tournament_id", group.tournament_id);
+
+  const status = computeCronStatus((matches ?? []) as Match[], cron);
 
   return {
     context,
