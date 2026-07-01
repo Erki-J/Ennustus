@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import {
   adminSaveMemberPrediction,
   type SettingsActionState,
@@ -17,6 +17,7 @@ type SettingsPredictionEditorProps = {
   kickoffLabel?: string;
   homeGoals: number | null;
   awayGoals: number | null;
+  onSaved?: (matchId: string, homeGoals: number, awayGoals: number) => void;
 };
 
 export function SettingsPredictionEditor({
@@ -27,12 +28,19 @@ export function SettingsPredictionEditor({
   kickoffLabel,
   homeGoals,
   awayGoals,
+  onSaved,
 }: SettingsPredictionEditorProps) {
   const t = useTranslations();
   const [state, formAction, pending] = useActionState(
     adminSaveMemberPrediction,
     initialState,
   );
+
+  useEffect(() => {
+    if (state.success && state.saved && onSaved) {
+      onSaved(matchId, state.saved.home_goals, state.saved.away_goals);
+    }
+  }, [state.success, state.saved, matchId, onSaved]);
 
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-2 rounded-lg bg-zinc-50 p-3">

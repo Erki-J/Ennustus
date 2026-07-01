@@ -1,11 +1,15 @@
 import { notFound } from "next/navigation";
 import { SettingsMemberPredictions } from "@/components/settings/member-predictions";
 import {
+  getAdminMemberBonus,
   getAdminPredictionMatrix,
-  loadAdminMemberPredictionsPanel,
 } from "@/lib/settings/actions";
 import { getI18n } from "@/lib/i18n/server";
-import { ADMIN_PREDICTIONS_BONUS_SECTION } from "@/lib/settings/predictions";
+import {
+  ADMIN_PREDICTIONS_BONUS_SECTION,
+  buildAdminMatchPredictionsPanel,
+  serializeAdminPredictionMap,
+} from "@/lib/settings/predictions";
 
 type SettingsPredictionsPageProps = {
   params: Promise<{ groupId: string }>;
@@ -25,26 +29,46 @@ export default async function SettingsPredictionsPage({
     notFound();
   }
 
-  const { members, rounds } = matrix;
+  const { members, rounds, predictionMap, context } = matrix;
 
   const initialUserId =
     members.find((member) => member.user_id === player)?.user_id ??
     members[0]?.user_id ??
     "";
 
+  if (initialUserId === "") {
+    notFound();
+  }
+
   const initialSection =
     section ??
     rounds[0]?.key ??
     ADMIN_PREDICTIONS_BONUS_SECTION;
 
-  const panel =
-    initialUserId === ""
-      ? null
-      : await loadAdminMemberPredictionsPanel(groupId, initialUserId, initialSection);
+  const serializedPredictionMap = serializeAdminPredictionMap(predictionMap);
+  const roundsWithMatches = rounds.map((round) => ({
+    key: round.key,
+    label: round.label,
+    matches: round.matches.map((match) => ({
+      id: match.id,
+      home_team: match.home_team,
+      away_team: match.away_team,
+      kickoff_at: match.kickoff_at,
+    })),
+  }));
 
-  if (!panel) {
-    notFound();
-  }
+  const isBonusSection = initialSection === ADMIN_PREDICTIONS_BONUS_SECTION;
+  const initialMatchPanel = buildAdminMatchPredictionsPanel(
+    initialUserId,
+    initialSection,
+    roundsWithMatches,
+    serializedPredictionMap,
+  );
+
+  const bonusData =
+    isBonusSection
+      ? await getAdminMemberBonus(groupId, initialUserId)
+      : null;
 
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -55,13 +79,15 @@ export default async function SettingsPredictionsPage({
           groupId={groupId}
           members={members}
           rounds={rounds.map((item) => ({ key: item.key, label: item.label }))}
+          roundsWithMatches={roundsWithMatches}
+          predictionMap={serializedPredictionMap}
           initialUserId={initialUserId}
-          initialSection={panel.selectedSection}
-          initialMatches={panel.matches}
-          initialPredictions={panel.predictions}
-          initialBonusPredictions={panel.bonusPredictions}
-          initialBonusPoints={panel.bonusPoints}
-          initialTeamOptions={panel.teamOptions}
+          initialSection={
+            isBonusSection ? ADMIN_PREDICTIONS_BONUS_SECTION : initialMatchPanel.selectedSection
+          }
+          initialBonusPredictions={bonusData?.questions ?? []}
+          initialBonusPoints={bonusData?.bonusPoints ?? context.scoring.bonus_points}
+          initialTeamOptions={bonusData?.teamOptions ?? { allTeams: [], teamsByGroup: {} }}
         />
       </div>
     </section>

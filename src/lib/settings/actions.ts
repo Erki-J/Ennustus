@@ -20,6 +20,10 @@ import { ADMIN_PREDICTIONS_BONUS_SECTION } from "@/lib/settings/predictions";
 export type SettingsActionState = {
   error?: string;
   success?: string;
+  saved?: {
+    home_goals: number;
+    away_goals: number;
+  };
 };
 
 function revalidateGroupModules(groupId: string) {
@@ -102,7 +106,10 @@ export async function adminSaveMemberPrediction(
   }
 
   revalidateGroupModules(groupId);
-  return { success: t("settings.predictionUpdated") };
+  return {
+    success: t("settings.predictionUpdated"),
+    saved: { home_goals: homeGoals, away_goals: awayGoals },
+  };
 }
 
 export async function updateGroupScoring(
@@ -268,6 +275,25 @@ export type AdminMemberPredictionsPanel = {
   bonusPoints: number;
   teamOptions: Awaited<ReturnType<typeof fetchBonusTeamOptions>>;
 };
+
+export async function loadAdminMemberBonusPanel(
+  groupId: string,
+  userId: string,
+): Promise<Pick<
+  AdminMemberPredictionsPanel,
+  "bonusPredictions" | "bonusPoints" | "teamOptions"
+> | null> {
+  const bonusData = await getAdminMemberBonus(groupId, userId);
+  if (!bonusData) {
+    return null;
+  }
+
+  return {
+    bonusPredictions: bonusData.questions,
+    bonusPoints: bonusData.bonusPoints,
+    teamOptions: bonusData.teamOptions,
+  };
+}
 
 export async function loadAdminMemberPredictionsPanel(
   groupId: string,

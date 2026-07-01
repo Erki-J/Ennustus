@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useRef, useState, useTransition } from "react";
 import { SettingsMemberBonusEditor } from "@/components/settings/member-bonus-editor";
 import { SettingsPredictionEditor } from "@/components/settings/prediction-editor";
 import { formatDateTime } from "@/lib/i18n/format";
@@ -8,8 +8,13 @@ import { useLocale, useTranslations } from "@/lib/i18n/provider";
 import { formatMatchTeams } from "@/lib/i18n/teams";
 import type { BonusQuestion } from "@/lib/bonus/queries";
 import type { BonusTeamOptions } from "@/lib/bonus/team-options";
-import { loadAdminMemberPredictionsPanel } from "@/lib/settings/actions";
-import { ADMIN_PREDICTIONS_BONUS_SECTION } from "@/lib/settings/predictions";
+import { loadAdminMemberBonusPanel } from "@/lib/settings/actions";
+import {
+  ADMIN_PREDICTIONS_BONUS_SECTION,
+  buildAdminMatchPredictionsPanel,
+  type AdminPredictionEntry,
+  type AdminRoundMatches,
+} from "@/lib/settings/predictions";
 
 export type MemberOption = {
   user_id: string;
@@ -44,10 +49,10 @@ type SettingsMemberPredictionsProps = {
   groupId: string;
   members: MemberOption[];
   rounds: RoundOption[];
+  roundsWithMatches: AdminRoundMatches[];
+  predictionMap: Record<string, AdminPredictionEntry>;
   initialUserId: string;
   initialSection: string;
-  initialMatches: MatchOption[];
-  initialPredictions: PredictionOption[];
   initialBonusPredictions: BonusPredictionOption[];
   initialBonusPoints: number;
   initialTeamOptions: BonusTeamOptions;
@@ -68,10 +73,10 @@ export function SettingsMemberPredictions({
   groupId,
   members,
   rounds,
+  roundsWithMatches,
+  predictionMap: initialPredictionMap,
   initialUserId,
   initialSection,
-  initialMatches,
-  initialPredictions,
   initialBonusPredictions,
   initialBonusPoints,
   initialTeamOptions,
@@ -79,41 +84,72 @@ export function SettingsMemberPredictions({
   const t = useTranslations();
   const locale = useLocale();
   const [isPending, startTransition] = useTransition();
+  const bonusRequestIdRef = useRef(0);
+  const [predictionMap, setPredictionMap] = useState(initialPredictionMap);
   const [activeUserId, setActiveUserId] = useState(initialUserId);
   const [selectedSection, setSelectedSection] = useState(initialSection);
-  const [matches, setMatches] = useState(initialMatches);
-  const [predictions, setPredictions] = useState(initialPredictions);
+  const initialMatchPanel = buildAdminMatchPredictionsPanel(
+    initialUserId,
+    initialSection,
+    roundsWithMatches,
+    initialPredictionMap,
+  );
+  const [matches, setMatches] = useState(initialMatchPanel.matches);
+  const [predictions, setPredictions] = useState(initialMatchPanel.predictions);
   const [bonusPredictions, setBonusPredictions] = useState(initialBonusPredictions);
   const [bonusPoints, setBonusPoints] = useState(initialBonusPoints);
   const [teamOptions, setTeamOptions] = useState(initialTeamOptions);
 
-  const predictionMap = new Map(
+  const predictionLookup = new Map(
     predictions.map((prediction) => [prediction.match_id, prediction]),
   );
   const isBonusSection = selectedSection === ADMIN_PREDICTIONS_BONUS_SECTION;
 
-  const loadPanel = useCallback(
+  const syncUrl = useCallback(
     (userId: string, section: string) => {
+      window.history.replaceState(
+        null,
+        "",
+        buildPredictionsUrl(groupId, userId, section),
+      );
+    },
+    [groupId],
+  );
+
+  const applyMatchPanel = useCallback(
+    (userId: string, section: string) => {
+      const panel = buildAdminMatchPredictionsPanel(
+        userId,
+        section,
+        roundsWithMatches,
+        predictionMap,
+      );
+      setSelectedSection(panel.selectedSection);
+      setMatches(panel.matches);
+      setPredictions(panel.predictions);
+      syncUrl(userId, panel.selectedSection);
+    },
+    [predictionMap, roundsWithMatches, syncUrl],
+  );
+
+  const loadBonusPanel = useCallback(
+    (userId: string, section: string) => {
+      const requestId = ++bonusRequestIdRef.current;
+      setSelectedSection(section);
+      syncUrl(userId, section);
+
       startTransition(async () => {
-        const data = await loadAdminMemberPredictionsPanel(groupId, userId, section);
-        if (!data) {
+        const data = await loadAdminMemberBonusPanel(groupId, userId);
+        if (!data || requestId !== bonusRequestIdRef.current) {
           return;
         }
 
-        setSelectedSection(data.selectedSection);
-        setMatches(data.matches);
-        setPredictions(data.predictions);
         setBonusPredictions(data.bonusPredictions);
         setBonusPoints(data.bonusPoints);
         setTeamOptions(data.teamOptions);
-        window.history.replaceState(
-          null,
-          "",
-          buildPredictionsUrl(groupId, userId, data.selectedSection),
-        );
       });
     },
-    [groupId],
+    [groupId, syncUrl],
   );
 
   if (members.length === 0) {
@@ -124,13 +160,40 @@ export function SettingsMemberPredictions({
 
   function handleMemberChange(userId: string) {
     setActiveUserId(userId);
-    loadPanel(userId, selectedSection);
+    if (selectedSection === ADMIN_PREDICTIONS_BONUS_SECTION) {
+      loadBonusPanel(userId, ADMIN_PREDICTIONS_BONUS_SECTION);
+    } else {
+      applyMatchPanel(userId, selectedSection);
+    }
   }
 
   function handleSectionChange(section: string) {
-    setSelectedSection(section);
-    loadPanel(activeUserId, section);
+    if (section === ADMIN_PREDICTIONS_BONUS_SECTION) {
+      loadBonusPanel(activeUserId, section);
+    } else {
+      applyMatchPanel(activeUserId, section);
+    }
   }
+
+  const handlePredictionSaved = useCallback(
+    (matchId: string, homeGoals: number, awayGoals: number) => {
+      setPredictionMap((current) => ({
+        ...current,
+        [`${activeUserId}:${matchId}`]: {
+          home_goals: homeGoals,
+          away_goals: awayGoals,
+        },
+      }));
+      setPredictions((current) =>
+        current.map((prediction) =>
+          prediction.match_id === matchId
+            ? { ...prediction, home_goals: homeGoals, away_goals: awayGoals }
+            : prediction,
+        ),
+      );
+    },
+    [activeUserId],
+  );
 
   return (
     <div className="space-y-4">
@@ -211,7 +274,7 @@ export function SettingsMemberPredictions({
             <p className="text-sm text-zinc-500">{t("settings.noMatchesRound")}</p>
           ) : (
             matches.map((match) => {
-              const prediction = predictionMap.get(match.id);
+              const prediction = predictionLookup.get(match.id);
               return (
                 <SettingsPredictionEditor
                   key={`${activeUserId}:${match.id}`}
@@ -222,6 +285,7 @@ export function SettingsMemberPredictions({
                   kickoffLabel={formatDateTime(match.kickoff_at, locale)}
                   homeGoals={prediction?.home_goals ?? null}
                   awayGoals={prediction?.away_goals ?? null}
+                  onSaved={handlePredictionSaved}
                 />
               );
             })
