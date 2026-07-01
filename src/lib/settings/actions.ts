@@ -19,7 +19,7 @@ function revalidateGroupModules(groupId: string) {
     `/groups/${groupId}/general-overview`,
     `/groups/${groupId}/settings`,
     `/groups/${groupId}/settings/scoring`,
-    `/groups/${groupId}/settings/bonus`,
+    `/groups/${groupId}/bonus-results`,
     `/groups/${groupId}/settings/predictions`,
     `/groups/${groupId}/matches`,
     `/groups/${groupId}`,

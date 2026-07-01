@@ -2,11 +2,11 @@ import { notFound } from "next/navigation";
 import { SettingsBonusAnswerForm } from "@/components/settings/bonus-answers-form";
 import { getBonusQuestionsForAdmin } from "@/lib/bonus/queries";
 
-type SettingsBonusPageProps = {
+type BonusResultsPageProps = {
   params: Promise<{ groupId: string }>;
 };
 
-export default async function SettingsBonusPage({ params }: SettingsBonusPageProps) {
+export default async function BonusResultsPage({ params }: BonusResultsPageProps) {
   const { groupId } = await params;
   const bonusAdmin = await getBonusQuestionsForAdmin(groupId);
 

@@ -34,6 +34,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/groups/:groupId/settings/bonus",
+        destination: "/groups/:groupId/bonus-results",
+        permanent: true,
+      },
+      {
         source: "/groups/:groupId/leaderboard/bonus",
         destination: "/groups/:groupId/overview/bonus",
         permanent: true,

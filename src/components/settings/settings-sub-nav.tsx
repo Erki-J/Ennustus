@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 
 const tabs = [
   { key: "scoring", hrefSuffix: "/scoring", label: "Punktireeglid" },
-  { key: "bonus", hrefSuffix: "/bonus", label: "Boonuse tulemused" },
   { key: "predictions", hrefSuffix: "/predictions", label: "Muuda mängijate ennustusi" },
 ] as const;
 
