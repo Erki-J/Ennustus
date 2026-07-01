@@ -44,7 +44,7 @@ export default async function GeneralOverviewPage({
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
       <div className="border-b border-zinc-100 px-6 py-4">
-        <h2 className="font-semibold text-zinc-900">Üldine ülevaade</h2>
+        <h2 className="font-semibold text-zinc-900">Koond ülevaade</h2>
         <p className="mt-1 text-sm text-zinc-600">
           Mängupäevade punktid rea kaupa — nagu Kicktippi „General overview”.
         </p>

@@ -22,7 +22,7 @@ export function GroupNavLinks({ groupId, isAdmin }: { groupId: string; isAdmin: 
     { href: `${base}/overview`, label: "Ülevaade", key: "overview" },
     {
       href: `${base}/general-overview`,
-      label: "Üldine ülevaade",
+      label: "Koond ülevaade",
       key: "general-overview",
     },
     {
