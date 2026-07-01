@@ -23,7 +23,7 @@ export function OverviewPredictionCell({
   }
 
   return (
-    <span>
+    <span className="text-zinc-900">
       {display.home_goals}-{display.away_goals}
       {display.points > 0 && (
         <sub className="ml-0.5 font-semibold text-emerald-700">{display.points}</sub>

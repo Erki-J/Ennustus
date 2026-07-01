@@ -55,6 +55,7 @@ export default async function RootLayout({
     <html
       lang={getHtmlLang(locale)}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      style={{ colorScheme: "light" }}
     >
       <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-900">
         <I18nProvider locale={locale} messages={messages}>
