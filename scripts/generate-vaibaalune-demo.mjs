@@ -74,7 +74,7 @@ function matchKey(home, away) {
 }
 
 const PREDICTION_OVERRIDES = {
-  // MD1 — Vaibaalune (Kicktipp: P=8)
+  // MD1
   "Mehhiko|Lõuna-Aafrika": [3, 0],
   "Lõuna-Korea|Tšehhi": [1, 2],
   "Kanada|Bosnia ja Hertsegoviina": [1, 1],
@@ -83,10 +83,96 @@ const PREDICTION_OVERRIDES = {
   "Brasiilia|Maroko": [2, 0],
   "Haiti|Šotimaa": [0, 3],
   "Austraalia|Türgi": [1, 2],
-  "Holland|Jaapan": [2, 1],
-  "Norra|Prantsusmaa": [0, 2],
-  "Brasiilia|Jaapan": [2, 0],
-  "Lõuna-Aafrika|Kanada": [0, 1],
+  // MD2
+  "Saksamaa|Curaçao": [4, 0],
+  "Holland|Jaapan": [2, 0],
+  "Elevandiluurannik|Ecuador": [2, 2],
+  "Rootsi|Tuneesia": [2, 1],
+  "Hispaania|Roheneemesaared": [3, 0],
+  "Belgia|Egiptus": [2, 0],
+  "Saudi Araabia|Uruguay": [0, 2],
+  "Iraan|Uus-Meremaa": [1, 1],
+  // MD3
+  "Prantsusmaa|Senegal": [3, 0],
+  "Iraak|Norra": [1, 3],
+  "Argentina|Alžeeria": [3, 0],
+  "Austria|Jordaania": [2, 1],
+  "Portugal|Kongo DV": [4, 1],
+  "Inglismaa|Horvaatia": [2, 2],
+  "Ghana|Panama": [3, 1],
+  "Usbekistan|Colombia": [0, 2],
+  // MD4
+  "Tšehhi|Lõuna-Aafrika": [2, 0],
+  "Šveits|Bosnia ja Hertsegoviina": [3, 1],
+  "Kanada|Katar": [2, 0],
+  "Mehhiko|Lõuna-Korea": [2, 1],
+  "USA|Austraalia": [1, 0],
+  "Šotimaa|Maroko": [2, 2],
+  "Brasiilia|Haiti": [3, 0],
+  "Türgi|Paraguay": [3, 2],
+  // MD5
+  "Holland|Rootsi": [3, 1],
+  "Saksamaa|Elevandiluurannik": [4, 0],
+  "Ecuador|Curaçao": [2, 0],
+  "Tuneesia|Jaapan": [1, 3],
+  "Hispaania|Saudi Araabia": [2, 1],
+  "Belgia|Iraan": [2, 0],
+  "Uruguay|Roheneemesaared": [3, 0],
+  "Uus-Meremaa|Egiptus": [2, 2],
+  // MD6
+  "Argentina|Austria": [3, 1],
+  "Prantsusmaa|Iraak": [4, 0],
+  "Norra|Senegal": [3, 2],
+  "Jordaania|Alžeeria": [1, 2],
+  "Portugal|Usbekistan": [3, 0],
+  "Inglismaa|Ghana": [3, 0],
+  "Panama|Horvaatia": [0, 2],
+  "Colombia|Kongo DV": [1, 0],
+  // MD7
+  "Bosnia ja Hertsegoviina|Katar": [2, 1],
+  "Šveits|Kanada": [3, 1],
+  "Maroko|Haiti": [2, 0],
+  "Šotimaa|Brasiilia": [1, 3],
+  "Lõuna-Aafrika|Lõuna-Korea": [0, 2],
+  "Tšehhi|Mehhiko": [1, 3],
+  // MD8
+  "Curaçao|Elevandiluurannik": [1, 2],
+  "Ecuador|Saksamaa": [0, 4],
+  "Jaapan|Rootsi": [2, 2],
+  "Tuneesia|Holland": [0, 3],
+  "Paraguay|Austraalia": [1, 1],
+  "Türgi|USA": [2, 3],
+  // MD9
+  "Norra|Prantsusmaa": [1, 3],
+  "Senegal|Iraak": [2, 1],
+  "Uruguay|Hispaania": [0, 3],
+  "Roheneemesaared|Saudi Araabia": [1, 1],
+  "Uus-Meremaa|Belgia": [0, 2],
+  "Egiptus|Iraan": [1, 1],
+  // MD10
+  "Horvaatia|Ghana": [3, 1],
+  "Panama|Inglismaa": [0, 3],
+  "Kongo DV|Usbekistan": [1, 0],
+  "Colombia|Portugal": [1, 3],
+  "Alžeeria|Austria": [0, 2],
+  "Jordaania|Argentina": [0, 3],
+  // 1/16 finaal
+  "Lõuna-Aafrika|Kanada": [0, 2],
+  "Brasiilia|Jaapan": [3, 1],
+  "Saksamaa|Paraguay": [3, 0],
+  "Holland|Maroko": [2, 0],
+  "Elevandiluurannik|Norra": [1, 2],
+  "Prantsusmaa|Rootsi": [3, 0],
+  "Mehhiko|Ecuador": [2, 1],
+  "Inglismaa|Kongo DV": [2, 0],
+  "Belgia|Senegal": [1, 0],
+  "USA|Bosnia ja Hertsegoviina": [3, 2],
+  "Hispaania|Austria": [2, 0],
+  "Portugal|Horvaatia": [3, 2],
+  "Šveits|Alžeeria": [1, 0],
+  "Austraalia|Egiptus": [1, 3],
+  "Argentina|Roheneemesaared": [3, 0],
+  "Colombia|Ghana": [2, 0],
 };
 
 function defaultPrediction(actualHome, actualAway) {
@@ -119,10 +205,10 @@ const BONUS_CORRECT = {
 
 const VAIBAALUNE_BONUS = {
   groups: {
-    A: "Mehhiko",
+    A: "Tšehhi",
     B: "Šveits",
     C: "Brasiilia",
-    D: "USA",
+    D: "Paraguay",
     E: "Saksamaa",
     F: "Holland",
     G: "Belgia",
@@ -132,13 +218,13 @@ const VAIBAALUNE_BONUS = {
     K: "Portugal",
     L: "Inglismaa",
   },
-  tournament_winner: "Argentina",
+  tournament_winner: "Brasiilia",
   top_scorer: "Saksamaa",
   semifinalists: {
-    22: "Brasiilia",
+    22: "Inglismaa",
     23: "Argentina",
-    24: "Prantsusmaa",
-    25: "Inglismaa",
+    24: "Brasiilia",
+    25: "Saksamaa",
   },
 };
 
