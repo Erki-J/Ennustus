@@ -1,13 +1,11 @@
 import { notFound } from "next/navigation";
+import { SettingsMemberPredictions } from "@/components/settings/member-predictions";
 import {
-  ADMIN_PREDICTIONS_BONUS_SECTION,
-  SettingsMemberPredictions,
-} from "@/components/settings/member-predictions";
-import {
-  getAdminMemberBonus,
   getAdminPredictionMatrix,
+  loadAdminMemberPredictionsPanel,
 } from "@/lib/settings/actions";
 import { getI18n } from "@/lib/i18n/server";
+import { ADMIN_PREDICTIONS_BONUS_SECTION } from "@/lib/settings/predictions";
 
 type SettingsPredictionsPageProps = {
   params: Promise<{ groupId: string }>;
@@ -21,43 +19,32 @@ export default async function SettingsPredictionsPage({
   const { t } = await getI18n();
   const { groupId } = await params;
   const { player, section } = await searchParams;
-  const isBonusSection = section === ADMIN_PREDICTIONS_BONUS_SECTION;
-  const matrix = await getAdminPredictionMatrix(
-    groupId,
-    isBonusSection ? undefined : section,
-  );
+  const matrix = await getAdminPredictionMatrix(groupId);
 
   if (!matrix) {
     notFound();
   }
 
-  const { members, rounds, round, matches, predictionMap, context } = matrix;
+  const { members, rounds } = matrix;
 
-  const selectedUserId =
+  const initialUserId =
     members.find((member) => member.user_id === player)?.user_id ??
     members[0]?.user_id ??
-    null;
+    "";
 
-  const selectedSection = isBonusSection
-    ? ADMIN_PREDICTIONS_BONUS_SECTION
-    : (round?.key ?? rounds[0]?.key ?? ADMIN_PREDICTIONS_BONUS_SECTION);
+  const initialSection =
+    section ??
+    rounds[0]?.key ??
+    ADMIN_PREDICTIONS_BONUS_SECTION;
 
-  const predictions =
-    selectedUserId === null
-      ? []
-      : matches.map((match) => {
-          const prediction = predictionMap.get(`${selectedUserId}:${match.id}`);
-          return {
-            match_id: match.id,
-            home_goals: prediction?.home_goals ?? 0,
-            away_goals: prediction?.away_goals ?? 0,
-          };
-        });
+  const panel =
+    initialUserId === ""
+      ? null
+      : await loadAdminMemberPredictionsPanel(groupId, initialUserId, initialSection);
 
-  const bonusData =
-    selectedUserId && isBonusSection
-      ? await getAdminMemberBonus(groupId, selectedUserId)
-      : null;
+  if (!panel) {
+    notFound();
+  }
 
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -68,18 +55,13 @@ export default async function SettingsPredictionsPage({
           groupId={groupId}
           members={members}
           rounds={rounds.map((item) => ({ key: item.key, label: item.label }))}
-          selectedSection={selectedSection}
-          matches={matches.map((match) => ({
-            id: match.id,
-            home_team: match.home_team,
-            away_team: match.away_team,
-            kickoff_at: match.kickoff_at,
-          }))}
-          predictions={predictions}
-          bonusPredictions={bonusData?.questions ?? []}
-          bonusPoints={bonusData?.bonusPoints ?? context.scoring.bonus_points}
-          teamOptions={bonusData?.teamOptions ?? { allTeams: [], teamsByGroup: {} }}
-          selectedUserId={selectedUserId}
+          initialUserId={initialUserId}
+          initialSection={panel.selectedSection}
+          initialMatches={panel.matches}
+          initialPredictions={panel.predictions}
+          initialBonusPredictions={panel.bonusPredictions}
+          initialBonusPoints={panel.bonusPoints}
+          initialTeamOptions={panel.teamOptions}
         />
       </div>
     </section>

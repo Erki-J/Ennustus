@@ -15,6 +15,7 @@ import {
 import { getGroupContext } from "@/lib/groups/context";
 import { parseCronSettings } from "@/lib/cron/settings";
 import { getCronStatus } from "@/lib/cron/sync";
+import { ADMIN_PREDICTIONS_BONUS_SECTION } from "@/lib/settings/predictions";
 
 export type SettingsActionState = {
   error?: string;
@@ -243,6 +244,88 @@ export async function getAdminMemberBonus(groupId: string, userId: string) {
       answer: predictionMap.get(question.id)?.answer ?? null,
       points: predictionMap.get(question.id)?.points ?? 0,
     })),
+  };
+}
+
+export type AdminMemberPredictionsPanel = {
+  selectedSection: string;
+  matches: Array<{
+    id: string;
+    home_team: string;
+    away_team: string;
+    kickoff_at: string;
+  }>;
+  predictions: Array<{
+    match_id: string;
+    home_goals: number;
+    away_goals: number;
+  }>;
+  bonusPredictions: Array<{
+    question: BonusQuestion;
+    answer: string | null;
+    points: number;
+  }>;
+  bonusPoints: number;
+  teamOptions: Awaited<ReturnType<typeof fetchBonusTeamOptions>>;
+};
+
+export async function loadAdminMemberPredictionsPanel(
+  groupId: string,
+  userId: string,
+  section: string,
+): Promise<AdminMemberPredictionsPanel | null> {
+  const isBonusSection = section === ADMIN_PREDICTIONS_BONUS_SECTION;
+  const matrix = await getAdminPredictionMatrix(
+    groupId,
+    isBonusSection ? undefined : section,
+  );
+
+  if (!matrix) {
+    return null;
+  }
+
+  const { matches, predictionMap, context, round, rounds } = matrix;
+  const selectedSection = isBonusSection
+    ? ADMIN_PREDICTIONS_BONUS_SECTION
+    : (round?.key ?? rounds[0]?.key ?? ADMIN_PREDICTIONS_BONUS_SECTION);
+
+  const predictions = matches.map((match) => {
+    const prediction = predictionMap.get(`${userId}:${match.id}`);
+    return {
+      match_id: match.id,
+      home_goals: prediction?.home_goals ?? 0,
+      away_goals: prediction?.away_goals ?? 0,
+    };
+  });
+
+  let bonusPredictions: AdminMemberPredictionsPanel["bonusPredictions"] = [];
+  let bonusPoints = context.scoring.bonus_points;
+  let teamOptions: AdminMemberPredictionsPanel["teamOptions"] = {
+    allTeams: [],
+    teamsByGroup: {},
+  };
+
+  if (isBonusSection) {
+    const bonusData = await getAdminMemberBonus(groupId, userId);
+    if (bonusData) {
+      bonusPredictions = bonusData.questions;
+      bonusPoints = bonusData.bonusPoints;
+      teamOptions = bonusData.teamOptions;
+    }
+  }
+
+  return {
+    selectedSection,
+    matches: matches.map((match) => ({
+      id: match.id,
+      home_team: match.home_team,
+      away_team: match.away_team,
+      kickoff_at: match.kickoff_at,
+    })),
+    predictions,
+    bonusPredictions,
+    bonusPoints,
+    teamOptions,
   };
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useCallback, useState, useTransition } from "react";
 import { SettingsMemberBonusEditor } from "@/components/settings/member-bonus-editor";
 import { SettingsPredictionEditor } from "@/components/settings/prediction-editor";
 import { formatDateTime } from "@/lib/i18n/format";
@@ -8,8 +8,8 @@ import { useLocale, useTranslations } from "@/lib/i18n/provider";
 import { formatMatchTeams } from "@/lib/i18n/teams";
 import type { BonusQuestion } from "@/lib/bonus/queries";
 import type { BonusTeamOptions } from "@/lib/bonus/team-options";
-
-export const ADMIN_PREDICTIONS_BONUS_SECTION = "bonus";
+import { loadAdminMemberPredictionsPanel } from "@/lib/settings/actions";
+import { ADMIN_PREDICTIONS_BONUS_SECTION } from "@/lib/settings/predictions";
 
 export type MemberOption = {
   user_id: string;
@@ -44,13 +44,13 @@ type SettingsMemberPredictionsProps = {
   groupId: string;
   members: MemberOption[];
   rounds: RoundOption[];
-  selectedSection: string;
-  matches: MatchOption[];
-  predictions: PredictionOption[];
-  bonusPredictions: BonusPredictionOption[];
-  bonusPoints: number;
-  teamOptions: BonusTeamOptions;
-  selectedUserId: string | null;
+  initialUserId: string;
+  initialSection: string;
+  initialMatches: MatchOption[];
+  initialPredictions: PredictionOption[];
+  initialBonusPredictions: BonusPredictionOption[];
+  initialBonusPoints: number;
+  initialTeamOptions: BonusTeamOptions;
 };
 
 function buildPredictionsUrl(
@@ -68,35 +68,68 @@ export function SettingsMemberPredictions({
   groupId,
   members,
   rounds,
-  selectedSection,
-  matches,
-  predictions,
-  bonusPredictions,
-  bonusPoints,
-  teamOptions,
-  selectedUserId,
+  initialUserId,
+  initialSection,
+  initialMatches,
+  initialPredictions,
+  initialBonusPredictions,
+  initialBonusPoints,
+  initialTeamOptions,
 }: SettingsMemberPredictionsProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [activeUserId, setActiveUserId] = useState(initialUserId);
+  const [selectedSection, setSelectedSection] = useState(initialSection);
+  const [matches, setMatches] = useState(initialMatches);
+  const [predictions, setPredictions] = useState(initialPredictions);
+  const [bonusPredictions, setBonusPredictions] = useState(initialBonusPredictions);
+  const [bonusPoints, setBonusPoints] = useState(initialBonusPoints);
+  const [teamOptions, setTeamOptions] = useState(initialTeamOptions);
+
   const predictionMap = new Map(
     predictions.map((prediction) => [prediction.match_id, prediction]),
   );
   const isBonusSection = selectedSection === ADMIN_PREDICTIONS_BONUS_SECTION;
 
+  const loadPanel = useCallback(
+    (userId: string, section: string) => {
+      startTransition(async () => {
+        const data = await loadAdminMemberPredictionsPanel(groupId, userId, section);
+        if (!data) {
+          return;
+        }
+
+        setSelectedSection(data.selectedSection);
+        setMatches(data.matches);
+        setPredictions(data.predictions);
+        setBonusPredictions(data.bonusPredictions);
+        setBonusPoints(data.bonusPoints);
+        setTeamOptions(data.teamOptions);
+        window.history.replaceState(
+          null,
+          "",
+          buildPredictionsUrl(groupId, userId, data.selectedSection),
+        );
+      });
+    },
+    [groupId],
+  );
+
   if (members.length === 0) {
     return <p className="text-sm text-zinc-500">{t("settings.noMembers")}</p>;
   }
 
-  const activeUserId = selectedUserId ?? members[0].user_id;
   const activeMember = members.find((member) => member.user_id === activeUserId);
 
   function handleMemberChange(userId: string) {
-    router.push(buildPredictionsUrl(groupId, userId, selectedSection));
+    setActiveUserId(userId);
+    loadPanel(userId, selectedSection);
   }
 
   function handleSectionChange(section: string) {
-    router.push(buildPredictionsUrl(groupId, activeUserId, section));
+    setSelectedSection(section);
+    loadPanel(activeUserId, section);
   }
 
   return (
@@ -149,7 +182,10 @@ export function SettingsMemberPredictions({
       </div>
 
       {activeMember && (
-        <div className="space-y-2">
+        <div
+          key={`${activeUserId}:${selectedSection}`}
+          className={`space-y-2 ${isPending ? "opacity-60" : ""}`}
+        >
           <p className="text-sm text-zinc-600">
             {isBonusSection ? t("settings.bonusSection") : t("settings.predictionsSection")}{" "}
             <span className="font-medium text-zinc-900">{activeMember.nickname}</span>
@@ -161,7 +197,7 @@ export function SettingsMemberPredictions({
             ) : (
               bonusPredictions.map(({ question, answer }) => (
                 <SettingsMemberBonusEditor
-                  key={question.id}
+                  key={`${activeUserId}:${question.id}`}
                   groupId={groupId}
                   userId={activeUserId}
                   question={question}
@@ -178,7 +214,7 @@ export function SettingsMemberPredictions({
               const prediction = predictionMap.get(match.id);
               return (
                 <SettingsPredictionEditor
-                  key={match.id}
+                  key={`${activeUserId}:${match.id}`}
                   groupId={groupId}
                   userId={activeUserId}
                   matchId={match.id}
