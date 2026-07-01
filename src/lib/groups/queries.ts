@@ -175,3 +175,21 @@ export async function getMyPendingInvitations(): Promise<PendingInvitation[]> {
 
   return data as PendingInvitation[];
 }
+
+export async function getInvitationHistoryOffer(token: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_invitation_history_offer", {
+    p_token: token,
+  });
+
+  if (error || !data || data.length === 0) {
+    return { hasHistory: false, historyNickname: null as string | null };
+  }
+
+  const row = data[0] as { has_history: boolean; history_nickname: string | null };
+
+  return {
+    hasHistory: Boolean(row.has_history),
+    historyNickname: row.history_nickname,
+  };
+}

@@ -134,15 +134,24 @@ export async function acceptInvitation(
 ): Promise<GroupActionState> {
   const token = String(formData.get("token") ?? "").trim();
   const nickname = String(formData.get("nickname") ?? "").trim();
+  const restoreRaw = String(formData.get("restore_history") ?? "").trim();
 
   if (!token || !nickname) {
     return { error: "Palun sisesta hüüdnimi." };
+  }
+
+  let restoreHistory: boolean | null = null;
+  if (restoreRaw === "true") {
+    restoreHistory = true;
+  } else if (restoreRaw === "false") {
+    restoreHistory = false;
   }
 
   const supabase = await createClient();
   const { data: groupId, error } = await supabase.rpc("accept_group_invitation", {
     p_token: token,
     p_nickname: nickname,
+    p_restore_history: restoreHistory,
   });
 
   if (error) {
@@ -151,6 +160,32 @@ export async function acceptInvitation(
 
   revalidatePath("/dashboard");
   redirect(`/groups/${groupId}`);
+}
+
+export async function removeGroupMember(
+  _prevState: GroupActionState,
+  formData: FormData,
+): Promise<GroupActionState> {
+  const groupId = String(formData.get("group_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+
+  if (!groupId || !userId) {
+    return { error: "Mängija puudub." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("remove_group_member", {
+    p_group_id: groupId,
+    p_user_id: userId,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath("/dashboard");
+  return { success: "Mängija eemaldatud." };
 }
 
 export async function revokeInvitation(

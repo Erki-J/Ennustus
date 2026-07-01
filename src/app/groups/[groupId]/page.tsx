@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { InviteForm } from "@/components/invite-form";
+import { RemoveMemberButton } from "@/components/remove-member-button";
 import { UpdateNicknameForm } from "@/components/update-nickname-form";
 import { getProfile } from "@/lib/auth/get-profile";
 import { getGroupById } from "@/lib/groups/queries";
@@ -40,7 +41,7 @@ export default async function GroupPage({ params }: GroupPageProps) {
           {group.members.map((member) => (
             <li
               key={member.id}
-              className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2 text-sm"
+              className="flex items-center justify-between gap-2 rounded-lg bg-zinc-50 px-3 py-2 text-sm"
             >
               <span className="font-medium text-zinc-900">
                 {member.nickname}
@@ -48,9 +49,20 @@ export default async function GroupPage({ params }: GroupPageProps) {
                   <span className="ml-2 font-normal text-zinc-500">(sina)</span>
                 )}
               </span>
-              <span className="text-zinc-500">
-                {member.role === "admin" ? "Admin" : "Mängija"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-zinc-500">
+                  {member.role === "admin" ? "Admin" : "Mängija"}
+                </span>
+                {group.myRole === "admin" &&
+                  member.role !== "admin" &&
+                  member.user_id !== profile.id && (
+                    <RemoveMemberButton
+                      groupId={group.id}
+                      userId={member.user_id}
+                      nickname={member.nickname}
+                    />
+                  )}
+              </div>
             </li>
           ))}
         </ul>

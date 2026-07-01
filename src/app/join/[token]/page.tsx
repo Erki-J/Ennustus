@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JoinGroupForm } from "@/components/join-group-form";
 import { getAuthUserEmail } from "@/lib/auth/get-auth-email";
-import { getInvitationByToken } from "@/lib/groups/queries";
+import {
+  getInvitationByToken,
+  getInvitationHistoryOffer,
+} from "@/lib/groups/queries";
 
 type JoinPageProps = {
   params: Promise<{ token: string }>;
@@ -29,6 +32,13 @@ export default async function JoinPage({ params }: JoinPageProps) {
   const isPending = invitation.status === "pending";
   const isRevoked = invitation.status === "revoked";
   const canJoin = isPending && !isExpired && !isRevoked;
+
+  const historyOffer =
+    loggedInEmail &&
+    canJoin &&
+    loggedInEmail.toLowerCase() === invitation.email.toLowerCase()
+      ? await getInvitationHistoryOffer(token)
+      : { hasHistory: false, historyNickname: null };
 
   function invalidInviteMessage() {
     if (isRevoked || isExpired) {
@@ -93,7 +103,11 @@ export default async function JoinPage({ params }: JoinPageProps) {
             <p className="text-sm text-zinc-600">
               Enne ennustamist vali hüüdnimi, mida teised mängijad näevad.
             </p>
-            <JoinGroupForm token={token} />
+            <JoinGroupForm
+              token={token}
+              hasHistory={historyOffer.hasHistory}
+              historyNickname={historyOffer.historyNickname}
+            />
           </div>
         )}
       </div>
