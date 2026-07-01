@@ -1,17 +1,19 @@
 import { notFound } from "next/navigation";
-import { AdminMatchesResultForm } from "@/components/admin-matches/result-form";
+import { AdminMatchResultForm } from "@/components/admin-matches/result-form";
 import { MatchdayNav } from "@/components/matchday-nav";
 import { getGroupMatchdays } from "@/lib/matchdays/queries";
-import { getPredictionCentreMatches } from "@/lib/prediction-centre/queries";
 
 type SettingsMatchesRoundPageProps = {
   params: Promise<{ groupId: string; roundKey: string }>;
+  searchParams: Promise<{ error?: string; success?: string }>;
 };
 
 export default async function SettingsMatchesRoundPage({
   params,
+  searchParams,
 }: SettingsMatchesRoundPageProps) {
   const { groupId, roundKey } = await params;
+  const { error, success } = await searchParams;
   const { rounds } = await getGroupMatchdays(groupId);
   const round = rounds.find((item) => item.key === roundKey);
 
@@ -19,7 +21,9 @@ export default async function SettingsMatchesRoundPage({
     notFound();
   }
 
-  const matches = await getPredictionCentreMatches(groupId, roundKey);
+  const matches = [...round.matches].sort((a, b) =>
+    a.kickoff_at.localeCompare(b.kickoff_at),
+  );
 
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -38,12 +42,27 @@ export default async function SettingsMatchesRoundPage({
           currentKey={round.key}
         />
       </div>
+
+      {error && (
+        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      )}
+      {success && (
+        <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {success}
+        </p>
+      )}
+
       <div className="mt-4 space-y-3">
         {matches.length === 0 ? (
           <p className="text-sm text-zinc-500">Sellel mängupäeval mänge pole.</p>
         ) : (
           matches.map((match) => (
-            <AdminMatchesResultForm key={match.id} groupId={groupId} match={match} />
+            <AdminMatchResultForm
+              key={match.id}
+              groupId={groupId}
+              roundKey={round.key}
+              match={match}
+            />
           ))
         )}
       </div>

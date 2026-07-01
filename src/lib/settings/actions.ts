@@ -27,7 +27,6 @@ function revalidateGroupModules(groupId: string) {
   for (const path of paths) {
     revalidatePath(path);
   }
-  revalidatePath(`/groups/${groupId}/settings/matches`, "layout");
 }
 
 export async function adminSaveMemberPrediction(
