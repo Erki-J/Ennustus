@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const tabs = [
   { key: "scoring", hrefSuffix: "/scoring", label: "Punktireeglid" },
   { key: "predictions", hrefSuffix: "/predictions", label: "Muuda mängijate ennustusi" },
+  { key: "cron", hrefSuffix: "/cron", label: "Cron" },
 ] as const;
 
 function tabClass(active: boolean) {

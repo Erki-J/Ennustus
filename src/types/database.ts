@@ -16,6 +16,17 @@ export type ScoringSettings = {
   bonus_points: number;
 };
 
+export type CronWindowStart = "kickoff";
+
+export type CronSettings = {
+  enabled: boolean;
+  interval_minutes: number;
+  window_start: CronWindowStart;
+  match_duration_minutes: number;
+  window_end_offset_minutes: number;
+  last_run_at: string | null;
+};
+
 export type Tournament = {
   id: string;
   slug: string;
@@ -114,5 +125,6 @@ export type MatchPrediction = {
 export type GroupSettings = {
   group_id: string;
   scoring: ScoringSettings;
+  cron: CronSettings;
   updated_at: string;
 };

@@ -10,6 +10,8 @@ import {
   resolveMatchdayRound,
 } from "@/lib/matchdays/queries";
 import { getGroupContext } from "@/lib/groups/context";
+import { parseCronSettings } from "@/lib/cron/settings";
+import { getCronStatus } from "@/lib/cron/sync";
 
 export type SettingsActionState = {
   error?: string;
@@ -24,6 +26,7 @@ function revalidateGroupModules(groupId: string) {
     `/groups/${groupId}/general-overview`,
     `/groups/${groupId}/settings`,
     `/groups/${groupId}/settings/scoring`,
+    `/groups/${groupId}/settings/cron`,
     `/groups/${groupId}/bonus-results`,
     `/groups/${groupId}/settings/predictions`,
     `/groups/${groupId}/matches`,
@@ -201,5 +204,75 @@ export async function getAdminMemberBonus(groupId: string, userId: string) {
       answer: predictionMap.get(question.id)?.answer ?? null,
       points: predictionMap.get(question.id)?.points ?? 0,
     })),
+  };
+}
+
+export async function updateGroupCron(
+  _prevState: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const groupId = String(formData.get("group_id") ?? "");
+  const enabled = formData.get("enabled") === "on";
+  const intervalMinutes = Number(formData.get("interval_minutes"));
+  const matchDurationMinutes = Number(formData.get("match_duration_minutes"));
+  const windowEndOffsetMinutes = Number(formData.get("window_end_offset_minutes"));
+
+  if (
+    !groupId ||
+    Number.isNaN(intervalMinutes) ||
+    Number.isNaN(matchDurationMinutes) ||
+    Number.isNaN(windowEndOffsetMinutes)
+  ) {
+    return { error: "Palun sisesta kehtivad väärtused." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_group_cron", {
+    p_group_id: groupId,
+    p_enabled: enabled,
+    p_interval_minutes: intervalMinutes,
+    p_match_duration_minutes: matchDurationMinutes,
+    p_window_end_offset_minutes: windowEndOffsetMinutes,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateGroupModules(groupId);
+  return { success: "Cron seaded uuendatud." };
+}
+
+export async function getGroupCronPageData(groupId: string) {
+  const context = await getGroupContext(groupId);
+
+  if (!context || context.myRole !== "admin") {
+    return null;
+  }
+
+  const supabase = await createClient();
+  const { data: group } = await supabase
+    .from("prediction_groups")
+    .select("tournament_id")
+    .eq("id", groupId)
+    .single();
+
+  if (!group) {
+    return null;
+  }
+
+  const { data: settings } = await supabase
+    .from("group_settings")
+    .select("cron")
+    .eq("group_id", groupId)
+    .single();
+
+  const cron = parseCronSettings(settings?.cron);
+  const status = await getCronStatus(group.tournament_id, cron);
+
+  return {
+    context,
+    cron,
+    status,
   };
 }
