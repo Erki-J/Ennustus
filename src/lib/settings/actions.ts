@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getPredictionCentreMatches } from "@/lib/prediction-centre/queries";
+import { fetchBonusTeamOptions } from "@/lib/bonus/team-options.server";
+import type { BonusQuestion } from "@/lib/bonus/queries";
+import {
+  getActiveMatchdayRound,
+  getGroupMatchdays,
+  resolveMatchdayRound,
+} from "@/lib/matchdays/queries";
 import { getGroupContext } from "@/lib/groups/context";
 
 export type SettingsActionState = {
@@ -97,7 +103,7 @@ export async function updateGroupScoring(
   return { success: "Punktireeglid uuendatud." };
 }
 
-export async function getAdminPredictionMatrix(groupId: string) {
+export async function getAdminPredictionMatrix(groupId: string, roundKey?: string) {
   const context = await getGroupContext(groupId);
 
   if (!context || context.myRole !== "admin") {
@@ -105,6 +111,11 @@ export async function getAdminPredictionMatrix(groupId: string) {
   }
 
   const supabase = await createClient();
+  const { rounds } = await getGroupMatchdays(groupId);
+  const round =
+    rounds.length === 0
+      ? null
+      : (resolveMatchdayRound(rounds, roundKey) ?? getActiveMatchdayRound(rounds));
 
   const { data: members } = await supabase
     .from("group_members")
@@ -112,7 +123,7 @@ export async function getAdminPredictionMatrix(groupId: string) {
     .eq("group_id", groupId)
     .order("nickname");
 
-  const matches = await getPredictionCentreMatches(groupId);
+  const matches = round?.matches ?? [];
 
   const { data: predictions } = await supabase
     .from("match_predictions")
@@ -130,7 +141,65 @@ export async function getAdminPredictionMatrix(groupId: string) {
   return {
     context,
     members: members ?? [],
+    rounds,
+    round,
     matches,
     predictionMap,
+  };
+}
+
+export async function getAdminMemberBonus(groupId: string, userId: string) {
+  const context = await getGroupContext(groupId);
+
+  if (!context || context.myRole !== "admin") {
+    return null;
+  }
+
+  const supabase = await createClient();
+
+  const { data: group } = await supabase
+    .from("prediction_groups")
+    .select("tournament_id")
+    .eq("id", groupId)
+    .single();
+
+  if (!group) {
+    return null;
+  }
+
+  const teamOptions = await fetchBonusTeamOptions(group.tournament_id);
+
+  const { data: questions } = await supabase
+    .from("bonus_questions")
+    .select(
+      "id, tournament_id, question_type, label, group_code, sort_order, points_value, correct_answer",
+    )
+    .eq("tournament_id", group.tournament_id)
+    .order("sort_order");
+
+  const { data: predictions } = await supabase
+    .from("bonus_predictions")
+    .select("question_id, answer, points")
+    .eq("group_id", groupId)
+    .eq("user_id", userId);
+
+  const predictionMap = new Map(
+    (predictions ?? []).map((prediction) => [prediction.question_id, prediction]),
+  );
+
+  const items: BonusQuestion[] = (questions ?? []).map((question) => ({
+    ...question,
+    question_type: question.question_type as BonusQuestion["question_type"],
+  }));
+
+  return {
+    context,
+    teamOptions,
+    bonusPoints: context.scoring.bonus_points,
+    questions: items.map((question) => ({
+      question,
+      answer: predictionMap.get(question.id)?.answer ?? null,
+      points: predictionMap.get(question.id)?.points ?? 0,
+    })),
   };
 }
