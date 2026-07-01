@@ -45,6 +45,7 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
   }
 
   const matches = round.matches;
+  const showGroupColumn = matches.some((match) => match.group_code);
 
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
@@ -71,7 +72,9 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
               <th className="px-4 py-2 font-medium">Kuupäev</th>
               <th className="px-4 py-2 font-medium">Kodus</th>
               <th className="px-4 py-2 font-medium">Võõrsil</th>
-              <th className="px-4 py-2 font-medium">Grupp</th>
+              {showGroupColumn && (
+                <th className="px-4 py-2 font-medium">Grupp</th>
+              )}
               <th className="px-4 py-2 font-medium">Tulemus</th>
             </tr>
           </thead>
@@ -81,9 +84,11 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
                 <td className="px-4 py-2 text-zinc-600">{formatKickoff(match.kickoff_at)}</td>
                 <td className="px-4 py-2 font-medium text-zinc-900">{match.home_team}</td>
                 <td className="px-4 py-2 font-medium text-zinc-900">{match.away_team}</td>
-                <td className="px-4 py-2 text-zinc-600">
-                  {match.group_code ? `Grupp ${match.group_code}` : "—"}
-                </td>
+                {showGroupColumn && (
+                  <td className="px-4 py-2 text-zinc-600">
+                    {match.group_code ? `Grupp ${match.group_code}` : "—"}
+                  </td>
+                )}
                 <td className="px-4 py-2 font-medium text-emerald-700">
                   {match.home_score !== null && match.away_score !== null
                     ? formatMatchScore(match.home_score, match.away_score)
