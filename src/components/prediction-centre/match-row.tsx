@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/i18n/format";
 import { useLocale, useTranslations } from "@/lib/i18n/provider";
 import { formatMatchTeams } from "@/lib/i18n/teams";
 import { formatMatchScore } from "@/lib/scoring/calculate";
+import { getMatchResultColorClass } from "@/lib/ui/match-result";
 import type { MatchWithPrediction } from "@/lib/prediction-centre/queries";
 
 const initialState: PredictionCentreActionState = {};
@@ -43,12 +44,15 @@ export function PredictionCentreMatchRow({
         <p className="mt-1 text-xs text-zinc-500">
           {formatDateTime(match.kickoff_at, locale)}
         </p>
-        {match.home_score !== null && match.away_score !== null && (
-          <p className="mt-1 text-xs font-medium text-emerald-700">
+        {(match.home_score !== null && match.away_score !== null) ||
+        match.status === "live" ? (
+          <p
+            className={`mt-1 text-xs font-medium ${getMatchResultColorClass(match.status)}`}
+          >
             {t("predictionCentre.resultLabel")}{" "}
             {formatMatchScore(match.home_score, match.away_score)}
           </p>
-        )}
+        ) : null}
       </td>
       <td className="px-3 py-4 align-top">
         {match.locked ? (

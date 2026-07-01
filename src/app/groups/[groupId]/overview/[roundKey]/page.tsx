@@ -9,6 +9,7 @@ import { translateTeamName } from "@/lib/i18n/teams";
 import { getMatchdayOverview } from "@/lib/overview/queries";
 import { formatMatchScore } from "@/lib/scoring/calculate";
 import { OWN_ROW_CLASS } from "@/lib/ui/highlight";
+import { getMatchResultColorClass } from "@/lib/ui/match-result";
 
 type OverviewRoundPageProps = {
   params: Promise<{ groupId: string; roundKey: string }>;
@@ -94,7 +95,9 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
                       : t("common.dash")}
                   </td>
                 )}
-                <td className="px-4 py-2 font-medium text-emerald-700">
+                <td
+                  className={`px-4 py-2 font-medium ${getMatchResultColorClass(match.status)}`}
+                >
                   {match.home_score !== null && match.away_score !== null
                     ? formatMatchScore(match.home_score, match.away_score)
                     : t("common.dash")}
@@ -122,11 +125,14 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
                   <span className="block">
                     {matchAbbreviation(match.home_team, match.away_team, locale)}
                   </span>
-                  {match.home_score !== null && match.away_score !== null && (
-                    <span className="mt-0.5 block font-normal text-zinc-400">
+                  {(match.home_score !== null && match.away_score !== null) ||
+                  match.status === "live" ? (
+                    <span
+                      className={`mt-0.5 block font-normal ${getMatchResultColorClass(match.status)}`}
+                    >
                       {formatMatchScore(match.home_score, match.away_score)}
                     </span>
-                  )}
+                  ) : null}
                 </th>
               ))}
               <th
