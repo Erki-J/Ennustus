@@ -58,9 +58,9 @@ export default async function OverviewBonusPage({ params }: OverviewBonusPagePro
         <table className="w-full min-w-[640px] text-left text-xs">
           <thead className="bg-zinc-50 text-zinc-500">
             <tr>
-              <th className="px-3 py-2 font-medium">Küsimus</th>
-              <th className="px-3 py-2 font-medium">Lühike</th>
-              <th className="px-3 py-2 font-medium">Tulemus</th>
+              <th className="whitespace-nowrap px-3 py-2 font-medium">Küsimus</th>
+              <th className="whitespace-nowrap px-3 py-2 font-medium">Lühike</th>
+              <th className="whitespace-nowrap px-3 py-2 font-medium">Tulemus</th>
             </tr>
           </thead>
           <tbody>
@@ -95,22 +95,42 @@ export default async function OverviewBonusPage({ params }: OverviewBonusPagePro
                 {questions.map((question, index) => (
                   <th
                     key={question.id}
-                    className="px-2 py-2 text-center font-medium"
+                    className="whitespace-nowrap px-2 py-2 text-center font-medium"
                     title={question.label}
                   >
                     {questionAbbrs[index]}
                   </th>
                 ))}
-                <th className="px-2 py-2 text-center font-medium" title="Mängude punktid">
+                <th className="whitespace-nowrap px-2 py-2 text-center font-medium" title="Mängude punktid">
                   P
                 </th>
-                <th className="px-2 py-2 text-center font-medium" title="Boonus">
+                <th className="whitespace-nowrap px-2 py-2 text-center font-medium" title="Boonus">
                   B
                 </th>
-                <th className="px-3 py-2 text-right font-medium">T</th>
+                <th className="whitespace-nowrap px-3 py-2 text-right font-medium">T</th>
               </tr>
             </thead>
             <tbody>
+              <tr className="border-t border-zinc-100 bg-zinc-50 text-zinc-600">
+                <td className="sticky left-0 bg-zinc-50 px-3 py-2">—</td>
+                <td className="sticky left-8 bg-zinc-50 px-3 py-2 font-medium text-zinc-800">
+                  Tulemus
+                </td>
+                {questions.map((question) => (
+                  <td
+                    key={question.id}
+                    className="whitespace-nowrap px-2 py-2 text-center font-medium text-emerald-700"
+                    title={question.correct_answer ?? undefined}
+                  >
+                    {question.correct_answer
+                      ? abbreviateAnswer(question.correct_answer)
+                      : "—"}
+                  </td>
+                ))}
+                <td className="px-2 py-2 text-center">—</td>
+                <td className="px-2 py-2 text-center">—</td>
+                <td className="px-3 py-2 text-right">—</td>
+              </tr>
               {rows.map((row, index) => (
                 <tr
                   key={row.user_id}
