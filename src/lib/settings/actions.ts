@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getPredictionCentreMatches } from "@/lib/prediction-centre/queries";
 import { getGroupContext } from "@/lib/groups/context";
-import type { ScoringSettings } from "@/types/database";
 
 export type SettingsActionState = {
   error?: string;
@@ -80,44 +79,18 @@ export async function updateGroupScoring(
     return { error: "Palun sisesta kehtivad punktid." };
   }
 
-  const scoring: ScoringSettings = {
-    exact_score: exactScore,
-    goal_diff: goalDiff,
-    tendency: tendency,
-    draw_points: drawPoints,
-    bonus_points: bonusPoints,
-  };
-
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("group_settings")
-    .update({ scoring, updated_at: new Date().toISOString() })
-    .eq("group_id", groupId);
+  const { error } = await supabase.rpc("update_group_scoring", {
+    p_group_id: groupId,
+    p_exact_score: exactScore,
+    p_goal_diff: goalDiff,
+    p_tendency: tendency,
+    p_draw_points: drawPoints,
+    p_bonus_points: bonusPoints,
+  });
 
   if (error) {
     return { error: error.message };
-  }
-
-  const { error: recalcMatchError } = await supabase.rpc(
-    "recalculate_group_match_points",
-    {
-      p_group_id: groupId,
-    },
-  );
-
-  if (recalcMatchError) {
-    return { error: recalcMatchError.message };
-  }
-
-  const { error: recalcBonusError } = await supabase.rpc(
-    "recalculate_group_bonus_points",
-    {
-      p_group_id: groupId,
-    },
-  );
-
-  if (recalcBonusError) {
-    return { error: recalcBonusError.message };
   }
 
   revalidateGroupModules(groupId);
