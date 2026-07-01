@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { SettingsMemberBonusEditor } from "@/components/settings/member-bonus-editor";
 import { SettingsPredictionEditor } from "@/components/settings/prediction-editor";
 import { formatDateTime } from "@/lib/i18n/format";
@@ -8,7 +8,7 @@ import { useLocale, useTranslations } from "@/lib/i18n/provider";
 import { formatMatchTeams } from "@/lib/i18n/teams";
 import type { BonusQuestion } from "@/lib/bonus/queries";
 import type { BonusTeamOptions } from "@/lib/bonus/team-options";
-import { loadAdminMemberBonusPanel } from "@/lib/settings/actions";
+import type { AdminBonusPanel } from "@/lib/settings/actions";
 import {
   ADMIN_PREDICTIONS_BONUS_SECTION,
   buildAdminMatchPredictionsPanel,
@@ -26,19 +26,6 @@ export type RoundOption = {
   label: string;
 };
 
-export type MatchOption = {
-  id: string;
-  home_team: string;
-  away_team: string;
-  kickoff_at: string;
-};
-
-export type PredictionOption = {
-  match_id: string;
-  home_goals: number;
-  away_goals: number;
-};
-
 export type BonusPredictionOption = {
   question: BonusQuestion;
   answer: string | null;
@@ -51,11 +38,9 @@ type SettingsMemberPredictionsProps = {
   rounds: RoundOption[];
   roundsWithMatches: AdminRoundMatches[];
   predictionMap: Record<string, AdminPredictionEntry>;
+  bonusPanelsByUser: Record<string, AdminBonusPanel>;
   initialUserId: string;
   initialSection: string;
-  initialBonusPredictions: BonusPredictionOption[];
-  initialBonusPoints: number;
-  initialTeamOptions: BonusTeamOptions;
 };
 
 function buildPredictionsUrl(
@@ -69,41 +54,46 @@ function buildPredictionsUrl(
   return `/groups/${groupId}/settings/predictions?${params.toString()}`;
 }
 
+const emptyBonusPanel: AdminBonusPanel = {
+  bonusPredictions: [],
+  bonusPoints: 0,
+  teamOptions: { allTeams: [], teamsByGroup: {} },
+};
+
 export function SettingsMemberPredictions({
   groupId,
   members,
   rounds,
   roundsWithMatches,
   predictionMap: initialPredictionMap,
+  bonusPanelsByUser,
   initialUserId,
   initialSection,
-  initialBonusPredictions,
-  initialBonusPoints,
-  initialTeamOptions,
 }: SettingsMemberPredictionsProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const [isPending, startTransition] = useTransition();
-  const bonusRequestIdRef = useRef(0);
   const [predictionMap, setPredictionMap] = useState(initialPredictionMap);
   const [activeUserId, setActiveUserId] = useState(initialUserId);
   const [selectedSection, setSelectedSection] = useState(initialSection);
-  const initialMatchPanel = buildAdminMatchPredictionsPanel(
-    initialUserId,
-    initialSection,
-    roundsWithMatches,
-    initialPredictionMap,
-  );
-  const [matches, setMatches] = useState(initialMatchPanel.matches);
-  const [predictions, setPredictions] = useState(initialMatchPanel.predictions);
-  const [bonusPredictions, setBonusPredictions] = useState(initialBonusPredictions);
-  const [bonusPoints, setBonusPoints] = useState(initialBonusPoints);
-  const [teamOptions, setTeamOptions] = useState(initialTeamOptions);
 
-  const predictionLookup = new Map(
-    predictions.map((prediction) => [prediction.match_id, prediction]),
-  );
   const isBonusSection = selectedSection === ADMIN_PREDICTIONS_BONUS_SECTION;
+
+  const matchPanel = useMemo(() => {
+    if (isBonusSection) {
+      return null;
+    }
+    return buildAdminMatchPredictionsPanel(
+      activeUserId,
+      selectedSection,
+      roundsWithMatches,
+      predictionMap,
+    );
+  }, [activeUserId, isBonusSection, predictionMap, roundsWithMatches, selectedSection]);
+
+  const bonusPanel = useMemo(
+    () => bonusPanelsByUser[activeUserId] ?? emptyBonusPanel,
+    [activeUserId, bonusPanelsByUser],
+  );
 
   const syncUrl = useCallback(
     (userId: string, section: string) => {
@@ -116,40 +106,28 @@ export function SettingsMemberPredictions({
     [groupId],
   );
 
-  const applyMatchPanel = useCallback(
-    (userId: string, section: string) => {
-      const panel = buildAdminMatchPredictionsPanel(
-        userId,
-        section,
-        roundsWithMatches,
-        predictionMap,
-      );
-      setSelectedSection(panel.selectedSection);
-      setMatches(panel.matches);
-      setPredictions(panel.predictions);
-      syncUrl(userId, panel.selectedSection);
+  const handlePredictionSaved = useCallback(
+    (matchId: string, homeGoals: number, awayGoals: number) => {
+      setPredictionMap((current) => ({
+        ...current,
+        [`${activeUserId}:${matchId}`]: {
+          home_goals: homeGoals,
+          away_goals: awayGoals,
+        },
+      }));
     },
-    [predictionMap, roundsWithMatches, syncUrl],
+    [activeUserId],
   );
 
-  const loadBonusPanel = useCallback(
-    (userId: string, section: string) => {
-      const requestId = ++bonusRequestIdRef.current;
-      setSelectedSection(section);
-      syncUrl(userId, section);
-
-      startTransition(async () => {
-        const data = await loadAdminMemberBonusPanel(groupId, userId);
-        if (!data || requestId !== bonusRequestIdRef.current) {
-          return;
-        }
-
-        setBonusPredictions(data.bonusPredictions);
-        setBonusPoints(data.bonusPoints);
-        setTeamOptions(data.teamOptions);
-      });
-    },
-    [groupId, syncUrl],
+  const predictionLookup = useMemo(
+    () =>
+      new Map(
+        (matchPanel?.predictions ?? []).map((prediction) => [
+          prediction.match_id,
+          prediction,
+        ]),
+      ),
+    [matchPanel?.predictions],
   );
 
   if (members.length === 0) {
@@ -160,40 +138,13 @@ export function SettingsMemberPredictions({
 
   function handleMemberChange(userId: string) {
     setActiveUserId(userId);
-    if (selectedSection === ADMIN_PREDICTIONS_BONUS_SECTION) {
-      loadBonusPanel(userId, ADMIN_PREDICTIONS_BONUS_SECTION);
-    } else {
-      applyMatchPanel(userId, selectedSection);
-    }
+    syncUrl(userId, selectedSection);
   }
 
   function handleSectionChange(section: string) {
-    if (section === ADMIN_PREDICTIONS_BONUS_SECTION) {
-      loadBonusPanel(activeUserId, section);
-    } else {
-      applyMatchPanel(activeUserId, section);
-    }
+    setSelectedSection(section);
+    syncUrl(activeUserId, section);
   }
-
-  const handlePredictionSaved = useCallback(
-    (matchId: string, homeGoals: number, awayGoals: number) => {
-      setPredictionMap((current) => ({
-        ...current,
-        [`${activeUserId}:${matchId}`]: {
-          home_goals: homeGoals,
-          away_goals: awayGoals,
-        },
-      }));
-      setPredictions((current) =>
-        current.map((prediction) =>
-          prediction.match_id === matchId
-            ? { ...prediction, home_goals: homeGoals, away_goals: awayGoals }
-            : prediction,
-        ),
-      );
-    },
-    [activeUserId],
-  );
 
   return (
     <div className="space-y-4">
@@ -245,35 +196,32 @@ export function SettingsMemberPredictions({
       </div>
 
       {activeMember && (
-        <div
-          key={`${activeUserId}:${selectedSection}`}
-          className={`space-y-2 ${isPending ? "opacity-60" : ""}`}
-        >
+        <div className="space-y-2">
           <p className="text-sm text-zinc-600">
             {isBonusSection ? t("settings.bonusSection") : t("settings.predictionsSection")}{" "}
             <span className="font-medium text-zinc-900">{activeMember.nickname}</span>
           </p>
 
           {isBonusSection ? (
-            bonusPredictions.length === 0 ? (
+            bonusPanel.bonusPredictions.length === 0 ? (
               <p className="text-sm text-zinc-500">{t("settings.noBonusQuestions")}</p>
             ) : (
-              bonusPredictions.map(({ question, answer }) => (
+              bonusPanel.bonusPredictions.map(({ question, answer }) => (
                 <SettingsMemberBonusEditor
                   key={`${activeUserId}:${question.id}`}
                   groupId={groupId}
                   userId={activeUserId}
                   question={question}
                   answer={answer}
-                  bonusPoints={bonusPoints}
-                  teamOptions={teamOptions}
+                  bonusPoints={bonusPanel.bonusPoints}
+                  teamOptions={bonusPanel.teamOptions}
                 />
               ))
             )
-          ) : matches.length === 0 ? (
+          ) : !matchPanel || matchPanel.matches.length === 0 ? (
             <p className="text-sm text-zinc-500">{t("settings.noMatchesRound")}</p>
           ) : (
-            matches.map((match) => {
+            matchPanel.matches.map((match) => {
               const prediction = predictionLookup.get(match.id);
               return (
                 <SettingsPredictionEditor

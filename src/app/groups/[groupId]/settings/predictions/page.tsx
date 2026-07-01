@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { SettingsMemberPredictions } from "@/components/settings/member-predictions";
 import {
-  getAdminMemberBonus,
+  getAdminBonusPanelsForGroup,
   getAdminPredictionMatrix,
 } from "@/lib/settings/actions";
 import { getI18n } from "@/lib/i18n/server";
@@ -23,13 +23,17 @@ export default async function SettingsPredictionsPage({
   const { t } = await getI18n();
   const { groupId } = await params;
   const { player, section } = await searchParams;
-  const matrix = await getAdminPredictionMatrix(groupId);
 
-  if (!matrix) {
+  const [matrix, bonusPanels] = await Promise.all([
+    getAdminPredictionMatrix(groupId),
+    getAdminBonusPanelsForGroup(groupId),
+  ]);
+
+  if (!matrix || !bonusPanels) {
     notFound();
   }
 
-  const { members, rounds, predictionMap, context } = matrix;
+  const { members, rounds, predictionMap } = matrix;
 
   const initialUserId =
     members.find((member) => member.user_id === player)?.user_id ??
@@ -65,11 +69,6 @@ export default async function SettingsPredictionsPage({
     serializedPredictionMap,
   );
 
-  const bonusData =
-    isBonusSection
-      ? await getAdminMemberBonus(groupId, initialUserId)
-      : null;
-
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
       <h2 className="font-semibold text-zinc-900">{t("settings.predictionsTitle")}</h2>
@@ -81,13 +80,11 @@ export default async function SettingsPredictionsPage({
           rounds={rounds.map((item) => ({ key: item.key, label: item.label }))}
           roundsWithMatches={roundsWithMatches}
           predictionMap={serializedPredictionMap}
+          bonusPanelsByUser={bonusPanels.byUser}
           initialUserId={initialUserId}
           initialSection={
             isBonusSection ? ADMIN_PREDICTIONS_BONUS_SECTION : initialMatchPanel.selectedSection
           }
-          initialBonusPredictions={bonusData?.questions ?? []}
-          initialBonusPoints={bonusData?.bonusPoints ?? context.scoring.bonus_points}
-          initialTeamOptions={bonusData?.teamOptions ?? { allTeams: [], teamsByGroup: {} }}
         />
       </div>
     </section>

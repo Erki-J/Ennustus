@@ -197,6 +197,109 @@ export async function getAdminPredictionMatrix(groupId: string, roundKey?: strin
   };
 }
 
+export type AdminBonusPanel = {
+  bonusPredictions: Array<{
+    question: BonusQuestion;
+    answer: string | null;
+    points: number;
+  }>;
+  bonusPoints: number;
+  teamOptions: Awaited<ReturnType<typeof fetchBonusTeamOptions>>;
+};
+
+export async function getAdminBonusPanelsForGroup(
+  groupId: string,
+): Promise<AdminBonusPanel & { byUser: Record<string, AdminBonusPanel> } | null> {
+  const context = await getGroupContext(groupId);
+
+  if (!context || context.myRole !== "admin") {
+    return null;
+  }
+
+  const supabase = await createClient();
+
+  const { data: group } = await supabase
+    .from("prediction_groups")
+    .select("tournament_id")
+    .eq("id", groupId)
+    .single();
+
+  if (!group) {
+    return null;
+  }
+
+  const locale = await getLocale();
+  const teamOptions = await fetchBonusTeamOptions(group.tournament_id, locale);
+
+  const { data: questions } = await supabase
+    .from("bonus_questions")
+    .select(
+      "id, tournament_id, question_type, label, group_code, sort_order, points_value, correct_answer",
+    )
+    .eq("tournament_id", group.tournament_id)
+    .order("sort_order");
+
+  const { data: members } = await supabase
+    .from("group_members")
+    .select("user_id")
+    .eq("group_id", groupId);
+
+  const { data: predictions } = await supabase
+    .from("bonus_predictions")
+    .select("user_id, question_id, answer, points")
+    .eq("group_id", groupId);
+
+  const items: BonusQuestion[] = (questions ?? []).map((question) => ({
+    ...question,
+    question_type: question.question_type as BonusQuestion["question_type"],
+  }));
+
+  const predictionsByUser = new Map<
+    string,
+    Map<string, { answer: string | null; points: number }>
+  >();
+
+  for (const prediction of predictions ?? []) {
+    if (!predictionsByUser.has(prediction.user_id)) {
+      predictionsByUser.set(prediction.user_id, new Map());
+    }
+    predictionsByUser.get(prediction.user_id)!.set(prediction.question_id, {
+      answer: prediction.answer,
+      points: prediction.points,
+    });
+  }
+
+  const emptyPanel: AdminBonusPanel = {
+    bonusPredictions: items.map((question) => ({
+      question,
+      answer: null,
+      points: 0,
+    })),
+    bonusPoints: context.scoring.bonus_points,
+    teamOptions,
+  };
+
+  const byUser: Record<string, AdminBonusPanel> = {};
+
+  for (const member of members ?? []) {
+    const userPredictions = predictionsByUser.get(member.user_id);
+    byUser[member.user_id] = {
+      bonusPredictions: items.map((question) => ({
+        question,
+        answer: userPredictions?.get(question.id)?.answer ?? null,
+        points: userPredictions?.get(question.id)?.points ?? 0,
+      })),
+      bonusPoints: context.scoring.bonus_points,
+      teamOptions,
+    };
+  }
+
+  return {
+    ...emptyPanel,
+    byUser,
+  };
+}
+
 export async function getAdminMemberBonus(groupId: string, userId: string) {
   const context = await getGroupContext(groupId);
 
