@@ -28,11 +28,7 @@ export default async function GroupPage({ params }: GroupPageProps) {
   return (
     <>
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="font-semibold text-zinc-900">{t("group.homeTitle")}</h2>
-        <p className="mt-1 text-sm text-zinc-600">{t("group.homeSubtitle")}</p>
-        <div className="mt-4 border-t border-zinc-100 pt-4">
-          <UpdateNicknameForm groupId={group.id} nickname={group.myNickname} />
-        </div>
+        <UpdateNicknameForm groupId={group.id} nickname={group.myNickname} />
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
