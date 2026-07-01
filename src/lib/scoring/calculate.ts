@@ -18,12 +18,13 @@ export function calculatePredictionPoints(
   const predDiff = homeGoals - awayGoals;
   const actualDiff = actualHome - actualAway;
 
-  if (predDiff === actualDiff) {
-    return scoring.goal_diff;
+  // Viik: tegelik tulemus ja ennustus on mõlemad viigid, aga skoor erineb (nt 1:1 vs 2:2)
+  if (actualDiff === 0 && predDiff === 0) {
+    return scoring.draw_points;
   }
 
-  if (actualDiff === 0 && predDiff !== 0) {
-    return scoring.draw_points;
+  if (predDiff === actualDiff) {
+    return scoring.goal_diff;
   }
 
   if (Math.sign(predDiff) === Math.sign(actualDiff)) {

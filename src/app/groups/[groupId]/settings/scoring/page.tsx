@@ -19,8 +19,9 @@ export default async function SettingsScoringPage({ params }: SettingsScoringPag
       <h2 className="font-semibold text-zinc-900">Punktireeglid</h2>
       <p className="mt-1 text-sm text-zinc-600">
         Vaikimisi 4 / 3 / 2 / 2 / 4 — täpne skoor / väravate vahe / võitja / viik /
-        boonus. Viigi punktid kehtivad siis, kui tegelik tulemus on viik, aga
-        ennustati võitjat.
+        boonus. Viigi punktid kehtivad siis, kui nii tegelik tulemus kui ka ennustus
+        on viigid, aga skoor erineb (nt tegelik 1:1, ennustus 2:2). Kui tegelik on
+        viik aga ennustati võitjat, punkte ei saa.
       </p>
       <div className="mt-4">
         <SettingsScoringForm groupId={groupId} scoring={matrix.context.scoring} />
