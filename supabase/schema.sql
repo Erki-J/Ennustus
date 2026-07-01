@@ -7,6 +7,7 @@ create table public.profiles (
   email text not null,
   display_name text,
   role public.user_role not null default 'user',
+  locale text not null default 'et' check (locale in ('et', 'en')),
   created_at timestamptz not null default now()
 );
 

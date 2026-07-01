@@ -1,10 +1,13 @@
 export type UserRole = "user" | "admin";
 
+export type AppLocale = "et" | "en";
+
 export type Profile = {
   id: string;
   email: string;
   display_name: string | null;
   role: UserRole;
+  locale: AppLocale;
   created_at: string;
 };
 

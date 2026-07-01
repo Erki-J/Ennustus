@@ -6,5 +6,5 @@ type SettingsIndexPageProps = {
 
 export default async function SettingsIndexPage({ params }: SettingsIndexPageProps) {
   const { groupId } = await params;
-  redirect(`/groups/${groupId}/settings/scoring`);
+  redirect(`/groups/${groupId}/settings/general`);
 }

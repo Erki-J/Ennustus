@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const tabs = [
+const generalTab = {
+  key: "general",
+  hrefSuffix: "/general",
+  label: "Üldine",
+} as const;
+
+const adminTabs = [
   { key: "scoring", hrefSuffix: "/scoring", label: "Punktireeglid" },
   { key: "predictions", hrefSuffix: "/predictions", label: "Muuda mängijate ennustusi" },
   { key: "cron", hrefSuffix: "/cron", label: "Cron" },
@@ -17,9 +23,16 @@ function tabClass(active: boolean) {
   }`;
 }
 
-export function SettingsSubNav({ groupId }: { groupId: string }) {
+export function SettingsSubNav({
+  groupId,
+  isAdmin,
+}: {
+  groupId: string;
+  isAdmin: boolean;
+}) {
   const pathname = usePathname();
   const base = `/groups/${groupId}/settings`;
+  const tabs = [generalTab, ...(isAdmin ? adminTabs : [])];
 
   return (
     <nav className="flex flex-wrap gap-2">

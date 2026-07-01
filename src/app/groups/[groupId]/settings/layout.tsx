@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { SettingsSubNav } from "@/components/settings/settings-sub-nav";
 import { getProfile } from "@/lib/auth/get-profile";
-import { getGroupContext } from "@/lib/groups/context";
+import { getSettingsLayoutContext } from "@/lib/settings/access";
 
 export default async function SettingsLayout({
   children,
@@ -11,21 +11,19 @@ export default async function SettingsLayout({
   params: Promise<{ groupId: string }>;
 }) {
   const { groupId } = await params;
-  const profile = await getProfile();
+  const layoutContext = await getSettingsLayoutContext(groupId);
 
-  if (!profile) {
-    redirect("/login");
-  }
-
-  const context = await getGroupContext(groupId);
-
-  if (!context || context.myRole !== "admin") {
+  if (!layoutContext) {
+    const profile = await getProfile();
+    if (!profile) {
+      redirect("/login");
+    }
     notFound();
   }
 
   return (
     <div className="space-y-4">
-      <SettingsSubNav groupId={groupId} />
+      <SettingsSubNav groupId={groupId} isAdmin={layoutContext.isAdmin} />
       <div>{children}</div>
     </div>
   );

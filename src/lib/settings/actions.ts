@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { isAppLocale } from "@/lib/settings/locale";
 import { fetchBonusTeamOptions } from "@/lib/bonus/team-options.server";
 import type { BonusQuestion } from "@/lib/bonus/queries";
 import {
@@ -25,6 +27,7 @@ function revalidateGroupModules(groupId: string) {
     `/groups/${groupId}/prediction-centre`,
     `/groups/${groupId}/general-overview`,
     `/groups/${groupId}/settings`,
+    `/groups/${groupId}/settings/general`,
     `/groups/${groupId}/settings/scoring`,
     `/groups/${groupId}/settings/cron`,
     `/groups/${groupId}/bonus-results`,
@@ -35,6 +38,36 @@ function revalidateGroupModules(groupId: string) {
   for (const path of paths) {
     revalidatePath(path);
   }
+}
+
+export async function updateMyLocale(
+  _prevState: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const locale = String(formData.get("locale") ?? "").trim();
+
+  if (!isAppLocale(locale)) {
+    return { error: "Palun vali kehtiv keel." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_my_locale", {
+    p_locale: locale,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set("locale", locale, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/", "layout");
+  return { success: "Keel uuendatud." };
 }
 
 export async function adminSaveMemberPrediction(

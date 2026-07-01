@@ -59,14 +59,12 @@ export function GroupNavLinks({ groupId, isAdmin }: { groupId: string; isAdmin: 
           <Link href={bonusResultsHref} className={linkClass(bonusResultsActive)}>
             Boonuse tulemused
           </Link>
-          <Link
-            href={`${settingsHref}/scoring`}
-            className={linkClass(settingsActive)}
-          >
-            Seaded
-          </Link>
         </>
       )}
+
+      <Link href={`${settingsHref}/general`} className={linkClass(settingsActive)}>
+        Seaded
+      </Link>
     </nav>
   );
 }
