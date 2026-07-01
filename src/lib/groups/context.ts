@@ -1,7 +1,8 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { ScoringSettings } from "@/types/database";
 
-export async function getGroupContext(groupId: string) {
+async function getGroupContextImpl(groupId: string) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -65,3 +66,5 @@ export async function getGroupContext(groupId: string) {
     },
   };
 }
+
+export const getGroupContext = cache(getGroupContextImpl);

@@ -5,6 +5,10 @@ import { GroupNavLinks } from "@/components/group-nav-links";
 import { getProfile } from "@/lib/auth/get-profile";
 import { getGroupContext } from "@/lib/groups/context";
 import { getI18n } from "@/lib/i18n/server";
+import {
+  getActiveMatchdayRound,
+  getGroupMatchdays,
+} from "@/lib/matchdays/queries";
 
 export default async function GroupLayout({
   children,
@@ -13,7 +17,7 @@ export default async function GroupLayout({
   children: React.ReactNode;
   params: Promise<{ groupId: string }>;
 }) {
-  const { t } = await getI18n();
+  const { locale, t } = await getI18n();
   const { groupId } = await params;
   const profile = await getProfile();
 
@@ -26,6 +30,24 @@ export default async function GroupLayout({
   if (!context) {
     notFound();
   }
+
+  const { rounds } = await getGroupMatchdays(groupId, locale);
+  const activeRound = rounds.length > 0 ? getActiveMatchdayRound(rounds) : null;
+  const base = `/groups/${groupId}`;
+  const overviewHref = activeRound
+    ? `${base}/overview/${activeRound.key}`
+    : `${base}/overview`;
+  const predictionCentreHref = activeRound
+    ? `${base}/prediction-centre/${activeRound.key}`
+    : `${base}/prediction-centre`;
+
+  const prefetchRoutes = [
+    base,
+    overviewHref,
+    `${base}/general-overview`,
+    predictionCentreHref,
+    `${base}/settings/general`,
+  ];
 
   return (
     <div className="min-h-full bg-zinc-50">
@@ -54,6 +76,9 @@ export default async function GroupLayout({
         <GroupNavLinks
           groupId={groupId}
           isAdmin={context.myRole === "admin"}
+          overviewHref={overviewHref}
+          predictionCentreHref={predictionCentreHref}
+          prefetchRoutes={prefetchRoutes}
         />
 
         {children}

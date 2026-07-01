@@ -1,7 +1,8 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/database";
 
-export async function getProfile(): Promise<Profile | null> {
+async function getProfileImpl(): Promise<Profile | null> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,6 +20,8 @@ export async function getProfile(): Promise<Profile | null> {
 
   return profile;
 }
+
+export const getProfile = cache(getProfileImpl);
 
 export async function isAdmin(): Promise<boolean> {
   const profile = await getProfile();

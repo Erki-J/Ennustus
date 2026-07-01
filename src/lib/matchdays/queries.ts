@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import {
   matchdayLabel,
@@ -101,7 +102,13 @@ export function getActiveMatchdayRound(rounds: MatchdayRound[]): MatchdayRound {
   return rounds[rounds.length - 1];
 }
 
-export async function getGroupMatchdays(groupId: string, locale: AppLocale = "et") {
+export type GroupMatchdaysResult = {
+  rounds: MatchdayRound[];
+  tournamentId: string | null;
+};
+
+const getGroupMatchdaysImpl = cache(
+  async (groupId: string, locale: AppLocale = "et"): Promise<GroupMatchdaysResult> => {
   const supabase = await createClient();
 
   const { data: group } = await supabase
@@ -117,4 +124,12 @@ export async function getGroupMatchdays(groupId: string, locale: AppLocale = "et
   const rounds = await getTournamentMatchdays(group.tournament_id, locale);
 
   return { rounds, tournamentId: group.tournament_id };
+  },
+);
+
+export async function getGroupMatchdays(
+  groupId: string,
+  locale: AppLocale = "et",
+): Promise<GroupMatchdaysResult> {
+  return getGroupMatchdaysImpl(groupId, locale);
 }
