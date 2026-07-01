@@ -1,4 +1,5 @@
 import type { AppLocale } from "@/lib/settings/locale";
+import { getDateFormatLocale } from "@/lib/settings/locale";
 
 /** Kickoff times are stored as UTC; display in Estonian local time. */
 export const DISPLAY_TIMEZONE = "Europe/Tallinn";
@@ -23,15 +24,13 @@ function dateOptions(locale: AppLocale): Intl.DateTimeFormatOptions {
 }
 
 export function formatDateTime(iso: string, locale: AppLocale): string {
-  return new Intl.DateTimeFormat(
-    locale === "en" ? "en-GB" : "et-EE",
-    dateTimeOptions(locale),
-  ).format(new Date(iso));
+  return new Intl.DateTimeFormat(getDateFormatLocale(locale), dateTimeOptions(locale)).format(
+    new Date(iso),
+  );
 }
 
 export function formatDate(iso: string, locale: AppLocale): string {
-  return new Intl.DateTimeFormat(
-    locale === "en" ? "en-GB" : "et-EE",
-    dateOptions(locale),
-  ).format(new Date(iso));
+  return new Intl.DateTimeFormat(getDateFormatLocale(locale), dateOptions(locale)).format(
+    new Date(iso),
+  );
 }

@@ -4,6 +4,7 @@ import { I18nProvider } from "@/lib/i18n/provider";
 import { getRequestLocale } from "@/lib/i18n/get-locale";
 import { getMessages } from "@/lib/i18n/messages";
 import { createTranslator } from "@/lib/i18n/translate";
+import { getHtmlLang } from "@/lib/settings/locale";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -52,7 +53,7 @@ export default async function RootLayout({
 
   return (
     <html
-      lang={locale}
+      lang={getHtmlLang(locale)}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-900">

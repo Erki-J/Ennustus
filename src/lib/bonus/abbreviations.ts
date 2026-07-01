@@ -1,3 +1,5 @@
+import type { AppLocale } from "@/lib/settings/locale";
+import { translateTeamName } from "@/lib/i18n/teams";
 import type { BonusQuestion } from "@/lib/bonus/queries";
 
 export function bonusQuestionAbbr(
@@ -29,8 +31,8 @@ export function buildQuestionAbbrs(questions: BonusQuestion[]): string[] {
   });
 }
 
-export function abbreviateAnswer(answer: string): string {
-  const trimmed = answer.trim();
+export function abbreviateAnswer(answer: string, locale?: AppLocale): string {
+  const trimmed = (locale ? translateTeamName(answer.trim(), locale) : answer.trim());
   if (!trimmed) {
     return "—";
   }

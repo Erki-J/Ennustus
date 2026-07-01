@@ -129,7 +129,7 @@ export default async function OverviewBonusPage({ params }: OverviewBonusPagePro
                     title={question.correct_answer ?? undefined}
                   >
                     {question.correct_answer
-                      ? abbreviateAnswer(question.correct_answer)
+                      ? abbreviateAnswer(question.correct_answer, locale)
                       : t("common.dash")}
                   </td>
                 ))}
@@ -161,7 +161,7 @@ export default async function OverviewBonusPage({ params }: OverviewBonusPagePro
                     >
                       {cell.answer ? (
                         <>
-                          {abbreviateAnswer(cell.answer)}
+                          {abbreviateAnswer(cell.answer, locale)}
                           {cell.points > 0 && (
                             <sub className="ml-0.5 font-semibold text-emerald-700">
                               {cell.points}

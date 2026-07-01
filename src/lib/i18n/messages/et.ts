@@ -228,7 +228,7 @@ export const et = {
     generalTitle: "Üldine",
     generalSubtitle: "Sinu isiklikud seaded.",
     language: "Keel",
-    languageHint: "Vali rakenduse keel.",
+    languageHint: "Vali rakenduse keel. „Eesti + riigid ENG“ jätab menüüd eesti keeles, aga riigid on inglise keeles.",
     languageUpdated: "Keel uuendatud.",
     errorInvalidLocale: "Palun vali kehtiv keel.",
     scoringTitle: "Punktireeglid",

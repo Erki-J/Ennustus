@@ -1,6 +1,6 @@
 export type UserRole = "user" | "admin";
 
-export type AppLocale = "et" | "en";
+export type AppLocale = "et" | "en" | "et-en";
 
 export type Profile = {
   id: string;

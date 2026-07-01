@@ -1,4 +1,5 @@
 import type { AppLocale } from "@/lib/settings/locale";
+import { usesEnglishTeamNames, getTeamSortLocale } from "@/lib/settings/locale";
 
 /** DB stores Estonian team names; map to English for display. */
 export const TEAM_ET_TO_EN: Record<string, string> = {
@@ -56,7 +57,7 @@ export const TEAM_ET_TO_EN: Record<string, string> = {
 };
 
 export function translateTeamName(name: string, locale: AppLocale): string {
-  if (locale === "en") {
+  if (usesEnglishTeamNames(locale)) {
     return TEAM_ET_TO_EN[name] ?? name;
   }
   return name;
@@ -67,7 +68,7 @@ export function translateTeamList(names: string[], locale: AppLocale): string[] 
 }
 
 export function sortTeamNames(names: string[], locale: AppLocale): string[] {
-  const collator = new Intl.Collator(locale === "en" ? "en" : "et");
+  const collator = new Intl.Collator(getTeamSortLocale(locale));
   return [...names].sort((a, b) =>
     collator.compare(translateTeamName(a, locale), translateTeamName(b, locale)),
   );

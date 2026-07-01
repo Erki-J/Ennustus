@@ -4,6 +4,7 @@ import { OverviewPredictionCell } from "@/components/overview/prediction-cell";
 import { getProfile } from "@/lib/auth/get-profile";
 import { formatDateTime } from "@/lib/i18n/format";
 import { getI18n } from "@/lib/i18n/server";
+import type { AppLocale } from "@/lib/settings/locale";
 import { translateTeamName } from "@/lib/i18n/teams";
 import { getMatchdayOverview } from "@/lib/overview/queries";
 import { formatMatchScore } from "@/lib/scoring/calculate";
@@ -13,7 +14,7 @@ type OverviewRoundPageProps = {
   params: Promise<{ groupId: string; roundKey: string }>;
 };
 
-function matchAbbreviation(home: string, away: string, locale: "et" | "en") {
+function matchAbbreviation(home: string, away: string, locale: AppLocale) {
   const homeLabel = translateTeamName(home, locale);
   const awayLabel = translateTeamName(away, locale);
   return `${homeLabel.slice(0, 3).toUpperCase()} ${awayLabel.slice(0, 3).toUpperCase()}`;

@@ -1,6 +1,7 @@
 import { getRequestLocale } from "@/lib/i18n/get-locale";
 import { getMessages } from "@/lib/i18n/messages";
 import { createTranslator } from "@/lib/i18n/translate";
+import { getHtmlLang } from "@/lib/settings/locale";
 import type { MetadataRoute } from "next";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
@@ -17,7 +18,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     orientation: "portrait",
     background_color: "#fafafa",
     theme_color: "#059669",
-    lang: locale,
+    lang: getHtmlLang(locale),
     categories: ["sports", "games"],
     icons: [
       {

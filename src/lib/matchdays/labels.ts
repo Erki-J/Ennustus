@@ -1,6 +1,7 @@
+import type { AppLocale } from "@/lib/settings/locale";
+import { getMessageLocale } from "@/lib/settings/locale";
 import { getMessages } from "@/lib/i18n/messages";
 import { createTranslator } from "@/lib/i18n/translate";
-import type { AppLocale } from "@/lib/settings/locale";
 
 export function matchdayParam(stage: string, matchday: number): string {
   return `${stage}-${matchday}`;
@@ -17,7 +18,7 @@ export function parseMatchdayParam(
 }
 
 function labels(locale: AppLocale) {
-  return createTranslator(getMessages(locale));
+  return createTranslator(getMessages(getMessageLocale(locale)));
 }
 
 export function matchdayLabel(
