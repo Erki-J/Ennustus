@@ -1,4 +1,5 @@
 import { parseCronSettings } from "@/lib/cron/settings";
+import { syncTournamentScores } from "@/lib/cron/scores/sync-scores";
 import {
   countMatchesInSyncWindow,
   isMatchInSyncWindow,
@@ -20,6 +21,7 @@ export type CronSyncResult = {
   tournamentsSynced: number;
   matchesInWindow: number;
   matchesUpdated: number;
+  scoresUpdated: number;
   details: string[];
 };
 
@@ -49,21 +51,17 @@ function mergeTournamentCron(
   };
 }
 
-async function syncTournamentMatches(matches: Match[]) {
-  const admin = createAdminClient();
-
-  if (!admin) {
-    return {
-      updated: 0,
-      details: ["SUPABASE_SERVICE_ROLE_KEY puudub — tulemusi ei uuendatud."],
-    };
-  }
-
-  const now = Date.now();
-  let updated = 0;
+async function syncTournamentMatches(
+  admin: NonNullable<ReturnType<typeof createAdminClient>>,
+  tournamentSlug: string,
+  allMatches: Match[],
+  windowMatches: Match[],
+  now = Date.now(),
+) {
+  let liveUpdated = 0;
   const details: string[] = [];
 
-  for (const match of matches) {
+  for (const match of windowMatches) {
     if (new Date(match.kickoff_at).getTime() > now) {
       continue;
     }
@@ -87,21 +85,22 @@ async function syncTournamentMatches(matches: Match[]) {
       continue;
     }
 
-    updated += 1;
+    liveUpdated += 1;
     details.push(`${match.home_team}–${match.away_team}: märgitud live`);
   }
 
-  if (process.env.FOOTBALL_DATA_API_KEY) {
-    details.push(
-      "FOOTBALL_DATA_API_KEY on seadistatud — skooride API sidumine tuleb järgmises sammus.",
-    );
-  } else {
-    details.push(
-      "Skooride automaatpäringu API pole seadistatud — uuendati ainult mängu staatust.",
-    );
-  }
+  const scoreResult = await syncTournamentScores(
+    admin,
+    tournamentSlug,
+    allMatches,
+    now,
+  );
 
-  return { updated, details };
+  return {
+    liveUpdated,
+    scoresUpdated: scoreResult.scoresUpdated,
+    details: [...details, ...scoreResult.details],
+  };
 }
 
 export async function runCronSync(): Promise<CronSyncResult> {
@@ -116,6 +115,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
       tournamentsSynced: 0,
       matchesInWindow: 0,
       matchesUpdated: 0,
+      scoresUpdated: 0,
       details: ["Lisa SUPABASE_SERVICE_ROLE_KEY ja CRON_SECRET keskkonna muutujatesse."],
     };
   }
@@ -133,6 +133,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
       tournamentsSynced: 0,
       matchesInWindow: 0,
       matchesUpdated: 0,
+      scoresUpdated: 0,
       details: [settingsError.message],
     };
   }
@@ -150,6 +151,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
       tournamentsSynced: 0,
       matchesInWindow: 0,
       matchesUpdated: 0,
+      scoresUpdated: 0,
       details: [],
     };
   }
@@ -169,6 +171,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
       tournamentsSynced: 0,
       matchesInWindow: 0,
       matchesUpdated: 0,
+      scoresUpdated: 0,
       details: [groupsError.message],
     };
   }
@@ -195,10 +198,21 @@ export async function runCronSync(): Promise<CronSyncResult> {
     }
   }
 
+  const tournamentIds = [...tournamentMap.keys()];
+  const { data: tournaments } = await admin
+    .from("tournaments")
+    .select("id, slug")
+    .in("id", tournamentIds);
+
+  const slugByTournament = new Map(
+    (tournaments ?? []).map((tournament) => [tournament.id, tournament.slug]),
+  );
+
   const now = Date.now();
   let tournamentsSynced = 0;
   let totalInWindow = 0;
-  let totalUpdated = 0;
+  let totalLiveUpdated = 0;
+  let totalScoresUpdated = 0;
   const details: string[] = [];
 
   for (const [tournamentId, config] of tournamentMap) {
@@ -228,8 +242,16 @@ export async function runCronSync(): Promise<CronSyncResult> {
     const windowMatches = typedMatches.filter((match) =>
       isMatchInSyncWindow(match, config.cron, now),
     );
-    const syncResult = await syncTournamentMatches(windowMatches);
-    totalUpdated += syncResult.updated;
+    const tournamentSlug = slugByTournament.get(tournamentId) ?? tournamentId;
+    const syncResult = await syncTournamentMatches(
+      admin,
+      tournamentSlug,
+      typedMatches,
+      windowMatches,
+      now,
+    );
+    totalLiveUpdated += syncResult.liveUpdated;
+    totalScoresUpdated += syncResult.scoresUpdated;
     details.push(...syncResult.details);
     tournamentsSynced += 1;
 
@@ -244,7 +266,8 @@ export async function runCronSync(): Promise<CronSyncResult> {
     groupsChecked: enabledRows.length,
     tournamentsSynced,
     matchesInWindow: totalInWindow,
-    matchesUpdated: totalUpdated,
+    matchesUpdated: totalLiveUpdated,
+    scoresUpdated: totalScoresUpdated,
     details,
   };
 }

@@ -267,7 +267,8 @@ export const en = {
     vercelHobbyHint:
       "Vercel Hobby allows cron once per day. The interval here applies when the cron endpoint runs.",
     vercelIntervalHint: "The interval set here applies per cron run.",
-    scoreImportHint: "Automatic score import requires FOOTBALL_DATA_API_KEY.",
+    scoreImportHint:
+      "Scores are imported from openfootball/worldcup.json. Optional override: OPENFOOTBALL_JSON_URL.",
     cronEnabled: "Cron enabled",
     pollStart: "Poll start",
     kickoff: "Kickoff",

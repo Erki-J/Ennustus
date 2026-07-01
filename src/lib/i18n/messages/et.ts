@@ -264,7 +264,8 @@ export const et = {
     vercelHobbyHint:
       "Vercel Hobby lubab cron'i kord päevas. Päringu intervall siin kehtib cron endpointi käivitamisel.",
     vercelIntervalHint: "Siin seatud intervall kehtib iga cron käivituse kohta.",
-    scoreImportHint: "Skooride automaatne import vajab FOOTBALL_DATA_API_KEY keskkonna muutujat.",
+    scoreImportHint:
+      "Skoorid tulevad openfootball/worldcup.json allikast. Valikuline override: OPENFOOTBALL_JSON_URL.",
     cronEnabled: "Cron on sees",
     pollStart: "Päringu algus",
     kickoff: "Mängu algus (kickoff)",
