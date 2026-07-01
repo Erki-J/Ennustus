@@ -77,8 +77,15 @@ export default async function SettingsCronPage({ params }: SettingsCronPageProps
             <code>SUPABASE_SERVICE_ROLE_KEY</code>
           </li>
           <li>
-            Vercel cron käivitub iga 5 minuti tagant (<code>vercel.json</code>); tegelik
-            päringu sagedus sõltub siin seatud intervallist ja mängu aknast.
+            Vercel Hobby lubab cron&apos;i <strong>1× päevas</strong> (
+            <code>0 7 * * *</code> — iga päev ~07:00 UTC). Tihedamaks pärimiseks
+            (nt iga 5 min mängu ajal) kasuta välist schedulerit, mis kutsub{" "}
+            <code>/api/cron/sync-results</code> päisega{" "}
+            <code>Authorization: Bearer CRON_SECRET</code>.
+          </li>
+          <li>
+            Siin seatud intervall kehtib iga päringu kohta — cron ei tee päringuid
+            väljaspool mängu akent.
           </li>
           <li>
             Skooride automaatne import vajab eraldi API võtit (
