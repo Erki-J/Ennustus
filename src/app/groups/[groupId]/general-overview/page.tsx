@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth/get-profile";
 import { getGroupContext } from "@/lib/groups/context";
 import { getGeneralOverview } from "@/lib/general-overview/queries";
+import { getI18n } from "@/lib/i18n/server";
 import { OWN_ROW_CLASS } from "@/lib/ui/highlight";
 
 type GeneralOverviewPageProps = {
@@ -25,6 +26,7 @@ function columnMaxima(rows: { round_points: number[] }[], columnCount: number) {
 export default async function GeneralOverviewPage({
   params,
 }: GeneralOverviewPageProps) {
+  const { t } = await getI18n();
   const { groupId } = await params;
   const profile = await getProfile();
 
@@ -44,24 +46,26 @@ export default async function GeneralOverviewPage({
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
       <div className="border-b border-zinc-100 px-6 py-4">
-        <h2 className="font-semibold text-zinc-900">Koond ülevaade</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          Mängupäevade punktid rea kaupa — nagu Kicktippi „General overview”.
-        </p>
+        <h2 className="font-semibold text-zinc-900">{t("generalOverview.title")}</h2>
+        <p className="mt-1 text-sm text-zinc-600">{t("generalOverview.subtitle")}</p>
         <p className="mt-3 inline-block rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-700">
-          Mängupäevade punktid
+          {t("generalOverview.matchdayPoints")}
         </p>
       </div>
 
       {columns.length === 0 ? (
-        <p className="px-6 py-8 text-sm text-zinc-500">Mänge pole lisatud.</p>
+        <p className="px-6 py-8 text-sm text-zinc-500">{t("generalOverview.noMatches")}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-xs">
             <thead className="bg-zinc-50 text-zinc-500">
               <tr>
-                <th className="sticky left-0 bg-zinc-50 px-3 py-2 font-medium">Pos</th>
-                <th className="sticky left-10 bg-zinc-50 px-3 py-2 font-medium">Nimi</th>
+                <th className="sticky left-0 bg-zinc-50 px-3 py-2 font-medium">
+                  {t("common.position")}
+                </th>
+                <th className="sticky left-10 bg-zinc-50 px-3 py-2 font-medium">
+                  {t("common.name")}
+                </th>
                 {columns.map((column) => (
                   <th
                     key={column.key}
@@ -71,10 +75,10 @@ export default async function GeneralOverviewPage({
                     {column.header}
                   </th>
                 ))}
-                <th className="px-2 py-2 text-center font-medium" title="Boonus">
-                  B
+                <th className="px-2 py-2 text-center font-medium" title={t("nav.bonus")}>
+                  {t("common.bonus")}
                 </th>
-                <th className="px-3 py-2 text-right font-medium">T</th>
+                <th className="px-3 py-2 text-right font-medium">{t("common.total")}</th>
               </tr>
             </thead>
             <tbody>

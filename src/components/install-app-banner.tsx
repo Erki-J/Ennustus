@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "@/lib/i18n/provider";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -27,6 +28,7 @@ function isStandalone() {
 }
 
 export function InstallAppBanner() {
+  const t = useTranslations();
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(
     null,
   );
@@ -72,16 +74,14 @@ export function InstallAppBanner() {
   if (showIosHint) {
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
-        <p className="font-medium">Lisa telefoni avakuvale</p>
-        <p className="mt-1 text-emerald-900">
-          Safari: vajuta Jaga → Lisa avakuvale.
-        </p>
+        <p className="font-medium">{t("install.hint")}</p>
+        <p className="mt-1 text-emerald-900">{t("install.safariHint")}</p>
         <button
           type="button"
           onClick={() => setDismissed(true)}
           className="mt-2 text-xs font-medium text-emerald-800 underline"
         >
-          Peida
+          {t("install.dismiss")}
         </button>
       </div>
     );
@@ -93,21 +93,21 @@ export function InstallAppBanner() {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
-      <p className="font-medium">Paigalda Ennustamine telefoni</p>
+      <p className="font-medium">{t("install.title")}</p>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={() => setDismissed(true)}
           className="rounded-lg px-3 py-1.5 text-emerald-800 hover:bg-emerald-100"
         >
-          Hiljem
+          {t("install.later")}
         </button>
         <button
           type="button"
           onClick={handleInstall}
           className="rounded-lg bg-emerald-600 px-3 py-1.5 font-medium text-white hover:bg-emerald-700"
         >
-          Paigalda
+          {t("install.install")}
         </button>
       </div>
     </div>

@@ -5,6 +5,7 @@ import {
   acceptInvitation,
   type GroupActionState,
 } from "@/lib/groups/actions";
+import { useTranslations } from "@/lib/i18n/provider";
 
 const initialState: GroupActionState = {};
 
@@ -19,6 +20,7 @@ export function JoinGroupForm({
   hasHistory,
   historyNickname,
 }: JoinGroupFormProps) {
+  const t = useTranslations();
   const [restoreHistory, setRestoreHistory] = useState<boolean | null>(
     hasHistory ? null : false,
   );
@@ -42,11 +44,12 @@ export function JoinGroupForm({
       {hasHistory && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-medium text-amber-950">
-            Leidsime sinu varasema ajaloo selles grupis
+            {t("join.historyFound")}
           </p>
           <p className="mt-1 text-sm text-amber-900">
-            Varasem hüüdnimi:{" "}
-            <span className="font-medium">{historyNickname ?? "—"}</span>
+            {t("join.previousNickname", {
+              nickname: historyNickname ?? t("common.dash"),
+            })}
           </p>
           <div className="mt-3 space-y-2">
             <label className="flex cursor-pointer items-start gap-2 text-sm text-amber-950">
@@ -57,9 +60,7 @@ export function JoinGroupForm({
                 onChange={() => setRestoreHistory(true)}
                 className="mt-0.5"
               />
-              <span>
-                Taasta varasem ajalugu (ennustused ja hüüdnimi ajaloost)
-              </span>
+              <span>{t("join.restoreHistory")}</span>
             </label>
             <label className="flex cursor-pointer items-start gap-2 text-sm text-amber-950">
               <input
@@ -69,7 +70,7 @@ export function JoinGroupForm({
                 onChange={() => setRestoreHistory(false)}
                 className="mt-0.5"
               />
-              <span>Alusta nullist (vana ajalugu kustutatakse)</span>
+              <span>{t("join.startFresh")}</span>
             </label>
           </div>
         </div>
@@ -77,7 +78,7 @@ export function JoinGroupForm({
 
       <div>
         <label htmlFor="nickname" className="mb-1 block text-sm font-medium">
-          Sinu hüüdnimi grupis
+          {t("join.nicknameInGroup")}
         </label>
         <input
           id="nickname"
@@ -86,15 +87,13 @@ export function JoinGroupForm({
           type="text"
           required
           minLength={2}
-          placeholder="nt. Mart"
+          placeholder={t("group.yourNicknamePlaceholder")}
           defaultValue={useHistoryNickname ? (historyNickname ?? "") : ""}
           readOnly={useHistoryNickname}
           className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-emerald-600 focus:ring-2 read-only:bg-zinc-100 read-only:text-zinc-600"
         />
         <p className="mt-1 text-xs text-zinc-500">
-          {useHistoryNickname
-            ? "Taastamisel kasutatakse ajaloo hüüdnime."
-            : "Seda nime näevad teised mängijad edetabelis."}
+          {useHistoryNickname ? t("join.restoreHint") : t("group.nicknameHint")}
         </p>
       </div>
 
@@ -109,7 +108,7 @@ export function JoinGroupForm({
         disabled={pending || !historyChosen}
         className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
       >
-        {pending ? "Liitun…" : "Liitu grupiga"}
+        {pending ? t("join.joining") : t("join.joinGroup")}
       </button>
     </form>
   );

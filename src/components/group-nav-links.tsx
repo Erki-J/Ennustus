@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "@/lib/i18n/provider";
 
 const linkClass = (active: boolean) =>
   `rounded-lg px-3 py-2 text-sm font-medium transition ${
@@ -12,22 +13,23 @@ const linkClass = (active: boolean) =>
 
 export function GroupNavLinks({ groupId, isAdmin }: { groupId: string; isAdmin: boolean }) {
   const pathname = usePathname();
+  const t = useTranslations();
   const base = `/groups/${groupId}`;
   const matchesHref = `${base}/matches`;
   const bonusResultsHref = `${base}/bonus-results`;
   const settingsHref = `${base}/settings`;
 
   const mainItems = [
-    { href: base, label: "Avaleht", key: "home" },
-    { href: `${base}/overview`, label: "Ülevaade", key: "overview" },
+    { href: base, label: t("nav.home"), key: "home" },
+    { href: `${base}/overview`, label: t("nav.overview"), key: "overview" },
     {
       href: `${base}/general-overview`,
-      label: "Koond ülevaade",
+      label: t("nav.generalOverview"),
       key: "general-overview",
     },
     {
       href: `${base}/prediction-centre`,
-      label: "Ennustuskeskus",
+      label: t("nav.predictionCentre"),
       key: "prediction-centre",
     },
   ];
@@ -54,16 +56,16 @@ export function GroupNavLinks({ groupId, isAdmin }: { groupId: string; isAdmin: 
       {isAdmin && (
         <>
           <Link href={matchesHref} className={linkClass(matchesActive)}>
-            Mängude tulemused
+            {t("nav.matchResults")}
           </Link>
           <Link href={bonusResultsHref} className={linkClass(bonusResultsActive)}>
-            Boonuse tulemused
+            {t("nav.bonusResults")}
           </Link>
         </>
       )}
 
       <Link href={`${settingsHref}/general`} className={linkClass(settingsActive)}>
-        Seaded
+        {t("nav.settings")}
       </Link>
     </nav>
   );

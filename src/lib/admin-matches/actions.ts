@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getTranslations } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 
 function matchesRoundPath(groupId: string, roundKey: string) {
   return `/groups/${groupId}/matches/${roundKey}`;
 }
 
-function redirectToMatchesRound(
+async function redirectToMatchesRound(
   groupId: string,
   roundKey: string,
   params: { error?: string; success?: string },
@@ -35,6 +36,7 @@ function revalidateGroupModules(groupId: string, roundKey: string) {
 }
 
 export async function saveMatchResult(formData: FormData) {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "");
   const roundKey = String(formData.get("round_key") ?? "");
   const matchId = String(formData.get("match_id") ?? "");
@@ -43,22 +45,22 @@ export async function saveMatchResult(formData: FormData) {
 
   if (!groupId || !roundKey || !matchId) {
     if (groupId && roundKey) {
-      redirectToMatchesRound(groupId, roundKey, {
-        error: "Palun sisesta tulemus.",
+      await redirectToMatchesRound(groupId, roundKey, {
+        error: t("admin.errorResultRequired"),
       });
     }
     redirect("/dashboard");
   }
 
   if (Number.isNaN(homeScore) || Number.isNaN(awayScore)) {
-    redirectToMatchesRound(groupId, roundKey, {
-      error: "Palun sisesta kehtiv skoor.",
+    await redirectToMatchesRound(groupId, roundKey, {
+      error: t("admin.errorInvalidScore"),
     });
   }
 
   if (homeScore < 0 || awayScore < 0 || homeScore > 20 || awayScore > 20) {
-    redirectToMatchesRound(groupId, roundKey, {
-      error: "Skoor peab olema vahemikus 0–20.",
+    await redirectToMatchesRound(groupId, roundKey, {
+      error: t("admin.errorScoreRange"),
     });
   }
 
@@ -70,11 +72,11 @@ export async function saveMatchResult(formData: FormData) {
   });
 
   if (error) {
-    redirectToMatchesRound(groupId, roundKey, { error: error.message });
+    await redirectToMatchesRound(groupId, roundKey, { error: error.message });
   }
 
   revalidateGroupModules(groupId, roundKey);
-  redirectToMatchesRound(groupId, roundKey, {
-    success: "Mängu tulemus salvestatud, punktid arvutatud.",
+  await redirectToMatchesRound(groupId, roundKey, {
+    success: t("admin.resultSaved"),
   });
 }

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AdminMatchResultForm } from "@/components/admin-matches/result-form";
 import { MatchdayNav } from "@/components/matchday-nav";
+import { getI18n } from "@/lib/i18n/server";
 import { getGroupMatchdays } from "@/lib/matchdays/queries";
 
 type MatchesRoundPageProps = {
@@ -12,9 +13,10 @@ export default async function MatchesRoundPage({
   params,
   searchParams,
 }: MatchesRoundPageProps) {
+  const { locale, t } = await getI18n();
   const { groupId, roundKey } = await params;
   const { error, success } = await searchParams;
-  const { rounds } = await getGroupMatchdays(groupId);
+  const { rounds } = await getGroupMatchdays(groupId, locale);
   const round = rounds.find((item) => item.key === roundKey);
 
   if (!round) {
@@ -30,11 +32,9 @@ export default async function MatchesRoundPage({
       <div className="space-y-4">
         <div>
           <h2 className="font-semibold text-zinc-900">
-            Mängude tulemused · {round.label}
+            {t("admin.roundTitle", { round: round.label })}
           </h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            Sisesta tegelik skoor — punktid arvutatakse automaatselt uuesti.
-          </p>
+          <p className="mt-1 text-sm text-zinc-600">{t("admin.enterResults")}</p>
         </div>
         <MatchdayNav
           basePath={`/groups/${groupId}/matches`}
@@ -54,7 +54,7 @@ export default async function MatchesRoundPage({
 
       <div className="mt-4 space-y-3">
         {matches.length === 0 ? (
-          <p className="text-sm text-zinc-500">Sellel mängupäeval mänge pole.</p>
+          <p className="text-sm text-zinc-500">{t("admin.noMatchesRound")}</p>
         ) : (
           matches.map((match) => (
             <AdminMatchResultForm

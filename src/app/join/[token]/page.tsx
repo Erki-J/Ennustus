@@ -6,12 +6,14 @@ import {
   getInvitationByToken,
   getInvitationHistoryOffer,
 } from "@/lib/groups/queries";
+import { getI18n } from "@/lib/i18n/server";
 
 type JoinPageProps = {
   params: Promise<{ token: string }>;
 };
 
 export default async function JoinPage({ params }: JoinPageProps) {
+  const { t } = await getI18n();
   const { token } = await params;
   const invitation = await getInvitationByToken(token);
 
@@ -42,9 +44,9 @@ export default async function JoinPage({ params }: JoinPageProps) {
 
   function invalidInviteMessage() {
     if (isRevoked || isExpired) {
-      return "See kutse on aegunud. Küsi adminilt uut kutset.";
+      return t("join.expired");
     }
-    return "See kutse on juba kasutatud.";
+    return t("join.used");
   }
 
   return (
@@ -52,7 +54,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
       <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
         <div className="mb-6 text-center">
           <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">
-            Kutse ennustusgruppi
+            {t("join.title")}
           </p>
           <h1 className="mt-2 text-2xl font-semibold text-zinc-900">
             {invitation.group_name}
@@ -67,42 +69,36 @@ export default async function JoinPage({ params }: JoinPageProps) {
         ) : !loggedInEmail ? (
           <div className="space-y-4">
             <p className="text-sm text-zinc-600">
-              Kutse on saadetud aadressile{" "}
-              <span className="font-medium">{invitation.email}</span>. Logi sisse
-              või loo konto sama e-mailiga.
+              {t("join.loginOrRegister", { email: invitation.email })}
             </p>
             <Link
               href={registerHref}
               className="flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
             >
-              Registreeru ja liitu
+              {t("join.registerAndJoin")}
             </Link>
             <Link
               href={loginHref}
               className="btn-secondary flex w-full items-center justify-center px-4 py-2.5 text-sm font-medium"
             >
-              Logi sisse
+              {t("join.login")}
             </Link>
           </div>
         ) : loggedInEmail.toLowerCase() !== invitation.email.toLowerCase() ? (
           <div className="space-y-3">
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              Oled sisse logitud kui {loggedInEmail}, aga kutse on saadetud
-              aadressile {invitation.email}. Logi välja ja kasuta õige e-mailiga
-              kontot.
+              {t("join.loggedInAs", { email: loggedInEmail })}
             </p>
             <Link
               href={loginHref}
               className="block text-center text-sm font-medium text-emerald-700 hover:underline"
             >
-              Logi sisse teise kontoga
+              {t("join.loginOther")}
             </Link>
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-zinc-600">
-              Enne ennustamist vali hüüdnimi, mida teised mängijad näevad.
-            </p>
+            <p className="text-sm text-zinc-600">{t("join.chooseNickname")}</p>
             <JoinGroupForm
               token={token}
               hasHistory={historyOffer.hasHistory}

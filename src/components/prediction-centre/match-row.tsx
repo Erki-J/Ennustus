@@ -5,6 +5,9 @@ import {
   saveMyPrediction,
   type PredictionCentreActionState,
 } from "@/lib/prediction-centre/actions";
+import { formatDateTime } from "@/lib/i18n/format";
+import { useLocale, useTranslations } from "@/lib/i18n/provider";
+import { formatMatchTeams } from "@/lib/i18n/teams";
 import { formatMatchScore } from "@/lib/scoring/calculate";
 import type { MatchWithPrediction } from "@/lib/prediction-centre/queries";
 
@@ -15,20 +18,12 @@ type PredictionCentreMatchRowProps = {
   match: MatchWithPrediction;
 };
 
-function formatKickoff(kickoffAt: string) {
-  return new Intl.DateTimeFormat("et-EE", {
-    weekday: "short",
-    day: "numeric",
-    month: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(kickoffAt));
-}
-
 export function PredictionCentreMatchRow({
   groupId,
   match,
 }: PredictionCentreMatchRowProps) {
+  const t = useTranslations();
+  const locale = useLocale();
   const [state, formAction, pending] = useActionState(saveMyPrediction, initialState);
 
   const defaultHome = match.my_prediction?.home_goals ?? "";
@@ -38,15 +33,20 @@ export function PredictionCentreMatchRow({
     <tr className="border-b border-zinc-100 last:border-0">
       <td className="px-3 py-4 align-top">
         {match.group_code && (
-          <p className="text-xs uppercase text-zinc-400">Grupp {match.group_code}</p>
+          <p className="text-xs uppercase text-zinc-400">
+            {t("predictionCentre.groupCode", { code: match.group_code })}
+          </p>
         )}
         <p className={`font-medium text-zinc-900 ${match.group_code ? "mt-1" : ""}`}>
-          {match.home_team} – {match.away_team}
+          {formatMatchTeams(match.home_team, match.away_team, locale)}
         </p>
-        <p className="mt-1 text-xs text-zinc-500">{formatKickoff(match.kickoff_at)}</p>
+        <p className="mt-1 text-xs text-zinc-500">
+          {formatDateTime(match.kickoff_at, locale)}
+        </p>
         {match.home_score !== null && match.away_score !== null && (
           <p className="mt-1 text-xs font-medium text-emerald-700">
-            Tulemus: {formatMatchScore(match.home_score, match.away_score)}
+            {t("predictionCentre.resultLabel")}{" "}
+            {formatMatchScore(match.home_score, match.away_score)}
           </p>
         )}
       </td>
@@ -56,10 +56,12 @@ export function PredictionCentreMatchRow({
             <p className="text-lg font-semibold text-zinc-900">
               {match.my_prediction
                 ? `${match.my_prediction.home_goals}:${match.my_prediction.away_goals}`
-                : "—"}
+                : t("common.dash")}
             </p>
             <p className="mt-1 text-xs text-zinc-500">
-              Lukus · {match.my_prediction?.points ?? 0} p
+              {t("predictionCentre.lockedPoints", {
+                points: match.my_prediction?.points ?? 0,
+              })}
             </p>
           </div>
         ) : (
@@ -91,7 +93,7 @@ export function PredictionCentreMatchRow({
                 disabled={pending}
                 className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
               >
-                {pending ? "Salvestan…" : "Salvesta"}
+                {pending ? t("common.saving") : t("common.save")}
               </button>
             </div>
             {state.error && (

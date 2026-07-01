@@ -5,6 +5,7 @@ import {
   updateGroupScoring,
   type SettingsActionState,
 } from "@/lib/settings/actions";
+import { useTranslations } from "@/lib/i18n/provider";
 import type { ScoringSettings } from "@/types/database";
 
 const initialState: SettingsActionState = {};
@@ -16,13 +17,14 @@ export function SettingsScoringForm({
   groupId: string;
   scoring: ScoringSettings;
 }) {
+  const t = useTranslations();
   const [state, formAction, pending] = useActionState(updateGroupScoring, initialState);
 
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-5">
       <input type="hidden" name="group_id" value={groupId} />
       <div>
-        <label className="mb-1 block text-sm font-medium">Täpne skoor</label>
+        <label className="mb-1 block text-sm font-medium">{t("settings.exactScore")}</label>
         <input
           name="exact_score"
           type="number"
@@ -32,7 +34,7 @@ export function SettingsScoringForm({
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium">Õige vahe</label>
+        <label className="mb-1 block text-sm font-medium">{t("settings.goalDiff")}</label>
         <input
           name="goal_diff"
           type="number"
@@ -42,7 +44,7 @@ export function SettingsScoringForm({
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium">Võitja</label>
+        <label className="mb-1 block text-sm font-medium">{t("settings.winner")}</label>
         <input
           name="tendency"
           type="number"
@@ -52,7 +54,7 @@ export function SettingsScoringForm({
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium">Viik</label>
+        <label className="mb-1 block text-sm font-medium">{t("settings.draw")}</label>
         <input
           name="draw_points"
           type="number"
@@ -62,7 +64,7 @@ export function SettingsScoringForm({
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium">Boonuse punktid</label>
+        <label className="mb-1 block text-sm font-medium">{t("settings.bonusPoints")}</label>
         <input
           name="bonus_points"
           type="number"
@@ -77,7 +79,7 @@ export function SettingsScoringForm({
           disabled={pending}
           className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
         >
-          {pending ? "Salvestan…" : "Uuenda punktireegleid"}
+          {pending ? t("common.saving") : t("settings.updateScoring")}
         </button>
         {state.error && <p className="mt-2 text-sm text-red-600">{state.error}</p>}
         {state.success && (

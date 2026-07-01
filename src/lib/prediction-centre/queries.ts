@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getGroupContext } from "@/lib/groups/context";
+import { getLocale } from "@/lib/i18n/server";
 import {
   getGroupMatchdays,
   resolveMatchdayRound,
@@ -25,7 +26,8 @@ export async function getPredictionCentreMatches(
     return [];
   }
 
-  const { rounds } = await getGroupMatchdays(groupId);
+  const locale = await getLocale();
+  const { rounds } = await getGroupMatchdays(groupId, locale);
 
   let matches: Match[];
   if (roundKey) {

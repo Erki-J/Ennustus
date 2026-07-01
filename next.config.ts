@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/groups/:groupId/settings",
-        destination: "/groups/:groupId/settings/scoring",
+        destination: "/groups/:groupId/settings/general",
         permanent: true,
       },
       {

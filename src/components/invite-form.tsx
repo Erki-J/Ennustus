@@ -10,12 +10,14 @@ import {
   inviteToGroup,
   type GroupActionState,
 } from "@/lib/groups/actions";
+import { useTranslations } from "@/lib/i18n/provider";
 
 const initialState: GroupActionState = {};
 
 type InviteFormProps = {
   groupId: string;
   groupName: string;
+  tournamentName: string;
   invitations: Array<{
     id: string;
     email: string;
@@ -25,7 +27,13 @@ type InviteFormProps = {
   }>;
 };
 
-export function InviteForm({ groupId, groupName, invitations }: InviteFormProps) {
+export function InviteForm({
+  groupId,
+  groupName,
+  tournamentName,
+  invitations,
+}: InviteFormProps) {
+  const t = useTranslations();
   const [state, formAction, pending] = useActionState(inviteToGroup, initialState);
 
   const pendingInvites = invitations.filter(
@@ -38,19 +46,17 @@ export function InviteForm({ groupId, groupName, invitations }: InviteFormProps)
         <input type="hidden" name="group_id" value={groupId} />
         <div>
           <label htmlFor="emails" className="mb-1 block text-sm font-medium">
-            Kutsu mängijaid e-mailiga
+            {t("group.inviteByEmail")}
           </label>
           <textarea
             id="emails"
             name="emails"
             rows={3}
             required
-            placeholder="üks e-mail rea kohta või komaga eraldatult"
+            placeholder={t("group.invitePlaceholder")}
             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-emerald-600 focus:ring-2"
           />
-          <p className="mt-1 text-xs text-zinc-500">
-            Iga kutsutu saab lingi. Saada e-kiri nupuga „Saada e-mail” või kopeeri link.
-          </p>
+          <p className="mt-1 text-xs text-zinc-500">{t("group.inviteEachGetsLink")}</p>
         </div>
 
         {state.error && (
@@ -70,16 +76,22 @@ export function InviteForm({ groupId, groupName, invitations }: InviteFormProps)
           disabled={pending}
           className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
         >
-          {pending ? "Loon kutsed…" : "Loo kutsed"}
+          {pending ? t("group.creatingInvites") : t("group.createInvites")}
         </button>
       </form>
 
       {pendingInvites.length > 0 && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-zinc-700">Ootel kutsed</p>
+          <p className="text-sm font-medium text-zinc-700">{t("group.pendingInvites")}</p>
           {pendingInvites.map((invite) => {
             const inviteUrl = buildInviteUrl(invite.token);
-            const mailto = buildMailtoLink(invite.email, groupName, inviteUrl);
+            const mailto = buildMailtoLink(
+              invite.email,
+              groupName,
+              tournamentName,
+              inviteUrl,
+              t,
+            );
 
             return (
               <div
@@ -93,14 +105,14 @@ export function InviteForm({ groupId, groupName, invitations }: InviteFormProps)
                     href={mailto}
                     className="rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-50"
                   >
-                    Saada e-mail
+                    {t("group.sendEmail")}
                   </a>
                   <button
                     type="button"
                     onClick={() => navigator.clipboard.writeText(inviteUrl)}
                     className="btn-secondary px-3 py-1.5 text-sm ring-1 ring-zinc-200"
                   >
-                    Kopeeri link
+                    {t("group.copyLink")}
                   </button>
                   <InviteRevokeForm groupId={groupId} invitationId={invite.id} />
                 </div>

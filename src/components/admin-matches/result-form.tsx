@@ -1,4 +1,9 @@
+"use client";
+
 import { saveMatchResult } from "@/lib/admin-matches/actions";
+import { formatDateTime } from "@/lib/i18n/format";
+import { useLocale, useTranslations } from "@/lib/i18n/provider";
+import { formatMatchTeams } from "@/lib/i18n/teams";
 import type { Match } from "@/types/database";
 
 export function AdminMatchResultForm({
@@ -10,10 +15,9 @@ export function AdminMatchResultForm({
   roundKey: string;
   match: Match;
 }) {
-  const kickoffLabel = new Intl.DateTimeFormat("et-EE", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(match.kickoff_at));
+  const t = useTranslations();
+  const locale = useLocale();
+  const kickoffLabel = formatDateTime(match.kickoff_at, locale);
 
   return (
     <form
@@ -25,7 +29,7 @@ export function AdminMatchResultForm({
       <input type="hidden" name="match_id" value={match.id} />
       <div className="min-w-48 flex-1">
         <p className="font-medium text-zinc-900">
-          {match.home_team} – {match.away_team}
+          {formatMatchTeams(match.home_team, match.away_team, locale)}
         </p>
         <p className="text-xs text-zinc-500">{kickoffLabel}</p>
       </div>
@@ -54,7 +58,7 @@ export function AdminMatchResultForm({
         type="submit"
         className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
       >
-        Salvesta tulemus
+        {t("admin.saveResult")}
       </button>
     </form>
   );

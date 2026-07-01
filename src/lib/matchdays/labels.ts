@@ -1,3 +1,7 @@
+import { getMessages } from "@/lib/i18n/messages";
+import { createTranslator } from "@/lib/i18n/translate";
+import type { AppLocale } from "@/lib/settings/locale";
+
 export function matchdayParam(stage: string, matchday: number): string {
   return `${stage}-${matchday}`;
 }
@@ -12,47 +16,59 @@ export function parseMatchdayParam(
   return { stage: match[1], matchday: Number(match[2]) };
 }
 
-export function matchdayLabel(stage: string, matchday: number): string {
+function labels(locale: AppLocale) {
+  return createTranslator(getMessages(locale));
+}
+
+export function matchdayLabel(
+  stage: string,
+  matchday: number,
+  locale: AppLocale = "et",
+): string {
+  const t = labels(locale);
+
   switch (stage) {
     case "group":
-      return `Mängupäev ${matchday}`;
+      return t("matchdays.matchday", { n: matchday });
     case "legacy":
-      return "Testmängud";
+      return t("matchdays.testMatches");
     case "round_32":
-      return "1/16 finaal";
+      return t("matchdays.round32");
     case "round_16":
-      return "Kaheksandikfinaal";
+      return t("matchdays.round16");
     case "quarter":
-      return "Veerandfinaal";
+      return t("matchdays.quarter");
     case "semi":
-      return "Poolfinaal";
+      return t("matchdays.semi");
     case "third":
-      return "3. koha mäng";
+      return t("matchdays.third");
     case "final":
-      return "Finaal";
+      return t("matchdays.final");
     default:
       return `${stage} ${matchday}`;
   }
 }
 
-export function stageLabel(stage: string): string {
+export function stageLabel(stage: string, locale: AppLocale = "et"): string {
+  const t = labels(locale);
+
   switch (stage) {
     case "group":
-      return "Alagrupp";
+      return t("matchdays.groupStage");
     case "legacy":
-      return "Testmängud";
+      return t("matchdays.testMatches");
     case "round_32":
-      return "1/16 finaal";
+      return t("matchdays.round32");
     case "round_16":
-      return "Kaheksandikfinaal";
+      return t("matchdays.round16");
     case "quarter":
-      return "Veerandfinaal";
+      return t("matchdays.quarter");
     case "semi":
-      return "Poolfinaal";
+      return t("matchdays.semi");
     case "third":
-      return "3. koha mäng";
+      return t("matchdays.third");
     case "final":
-      return "Finaal";
+      return t("matchdays.final");
     default:
       return stage;
   }

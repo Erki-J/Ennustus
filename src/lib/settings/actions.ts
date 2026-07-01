@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { getLocale, getTranslations } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAppLocale } from "@/lib/settings/locale";
 import { fetchBonusTeamOptions } from "@/lib/bonus/team-options.server";
@@ -44,10 +45,11 @@ export async function updateMyLocale(
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const t = await getTranslations();
   const locale = String(formData.get("locale") ?? "").trim();
 
   if (!isAppLocale(locale)) {
-    return { error: "Palun vali kehtiv keel." };
+    return { error: t("settings.errorInvalidLocale") };
   }
 
   const supabase = await createClient();
@@ -67,13 +69,14 @@ export async function updateMyLocale(
 
   revalidatePath("/dashboard");
   revalidatePath("/", "layout");
-  return { success: "Keel uuendatud." };
+  return { success: t("settings.languageUpdated") };
 }
 
 export async function adminSaveMemberPrediction(
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "");
   const userId = String(formData.get("user_id") ?? "");
   const matchId = String(formData.get("match_id") ?? "");
@@ -81,7 +84,7 @@ export async function adminSaveMemberPrediction(
   const awayGoals = Number(formData.get("away_goals"));
 
   if (!groupId || !userId || !matchId || Number.isNaN(homeGoals) || Number.isNaN(awayGoals)) {
-    return { error: "Palun sisesta skoor." };
+    return { error: t("predictionCentre.errorScoreRequired") };
   }
 
   const supabase = await createClient();
@@ -98,13 +101,14 @@ export async function adminSaveMemberPrediction(
   }
 
   revalidateGroupModules(groupId);
-  return { success: "Ennustus uuendatud." };
+  return { success: t("settings.predictionUpdated") };
 }
 
 export async function updateGroupScoring(
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "");
   const exactScore = Number(formData.get("exact_score"));
   const goalDiff = Number(formData.get("goal_diff"));
@@ -118,7 +122,7 @@ export async function updateGroupScoring(
       Number.isNaN(n),
     )
   ) {
-    return { error: "Palun sisesta kehtivad punktid." };
+    return { error: t("settings.errorInvalidPoints") };
   }
 
   const supabase = await createClient();
@@ -136,7 +140,7 @@ export async function updateGroupScoring(
   }
 
   revalidateGroupModules(groupId);
-  return { success: "Punktireeglid uuendatud." };
+  return { success: t("settings.scoringUpdated") };
 }
 
 export async function getAdminPredictionMatrix(groupId: string, roundKey?: string) {
@@ -147,7 +151,8 @@ export async function getAdminPredictionMatrix(groupId: string, roundKey?: strin
   }
 
   const supabase = await createClient();
-  const { rounds } = await getGroupMatchdays(groupId);
+  const locale = await getLocale();
+  const { rounds } = await getGroupMatchdays(groupId, locale);
   const round =
     rounds.length === 0
       ? null
@@ -203,7 +208,8 @@ export async function getAdminMemberBonus(groupId: string, userId: string) {
     return null;
   }
 
-  const teamOptions = await fetchBonusTeamOptions(group.tournament_id);
+  const locale = await getLocale();
+  const teamOptions = await fetchBonusTeamOptions(group.tournament_id, locale);
 
   const { data: questions } = await supabase
     .from("bonus_questions")
@@ -244,6 +250,7 @@ export async function updateGroupCron(
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "");
   const enabled = formData.get("enabled") === "on";
   const intervalMinutes = Number(formData.get("interval_minutes"));
@@ -256,7 +263,7 @@ export async function updateGroupCron(
     Number.isNaN(matchDurationMinutes) ||
     Number.isNaN(windowEndOffsetMinutes)
   ) {
-    return { error: "Palun sisesta kehtivad väärtused." };
+    return { error: t("settings.errorInvalidCron") };
   }
 
   const supabase = await createClient();
@@ -273,7 +280,7 @@ export async function updateGroupCron(
   }
 
   revalidateGroupModules(groupId);
-  return { success: "Cron seaded uuendatud." };
+  return { success: t("settings.cronUpdated") };
 }
 
 export async function getGroupCronPageData(groupId: string) {

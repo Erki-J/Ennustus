@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "@/lib/i18n/provider";
 import type { GroupWithMeta } from "@/types/database";
 
 export function GroupCard({ group }: { group: GroupWithMeta }) {
+  const t = useTranslations();
+
   return (
     <Link
       href={`/groups/${group.id}`}
@@ -14,12 +19,13 @@ export function GroupCard({ group }: { group: GroupWithMeta }) {
         </div>
         {group.my_role === "admin" && (
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-            Admin
+            {t("common.admin")}
           </span>
         )}
       </div>
       <p className="mt-3 text-sm text-zinc-600">
-        Sina: {group.my_nickname} · {group.member_count} mängijat
+        {t("dashboard.youLabel", { nickname: group.my_nickname })} ·{" "}
+        {t("dashboard.memberCount", { count: group.member_count })}
       </p>
     </Link>
   );

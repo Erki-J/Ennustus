@@ -1,5 +1,6 @@
 import { getBonusPointsByUser } from "@/lib/bonus/queries";
 import { getGroupContext } from "@/lib/groups/context";
+import { getLocale } from "@/lib/i18n/server";
 import {
   getGroupMatchdays,
   resolveMatchdayRound,
@@ -26,7 +27,8 @@ export async function getMatchdayOverview(groupId: string, roundKey?: string) {
     return null;
   }
 
-  const { rounds } = await getGroupMatchdays(groupId);
+  const locale = await getLocale();
+  const { rounds } = await getGroupMatchdays(groupId, locale);
   const round = resolveMatchdayRound(rounds, roundKey);
 
   if (!round) {

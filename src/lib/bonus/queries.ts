@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getGroupContext } from "@/lib/groups/context";
+import { getLocale } from "@/lib/i18n/server";
 import { fetchBonusTeamOptions } from "@/lib/bonus/team-options.server";
 import type { BonusTeamOptions } from "@/lib/bonus/team-options";
 
@@ -66,7 +67,8 @@ export async function getBonusCentre(groupId: string) {
   }
 
   const locked = await isBonusLocked(group.tournament_id);
-  const teamOptions = await fetchBonusTeamOptions(group.tournament_id);
+  const locale = await getLocale();
+  const teamOptions = await fetchBonusTeamOptions(group.tournament_id, locale);
 
   const { data: questions } = await supabase
     .from("bonus_questions")
@@ -249,7 +251,8 @@ export async function getBonusQuestionsForAdmin(groupId: string) {
     return null;
   }
 
-  const teamOptions = await fetchBonusTeamOptions(group.tournament_id);
+  const locale = await getLocale();
+  const teamOptions = await fetchBonusTeamOptions(group.tournament_id, locale);
 
   const { data: questions } = await supabase
     .from("bonus_questions")

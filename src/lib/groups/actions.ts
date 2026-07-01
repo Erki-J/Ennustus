@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getTranslations } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 
 export type GroupActionState = {
@@ -13,16 +14,17 @@ export async function createPredictionGroup(
   _prevState: GroupActionState,
   formData: FormData,
 ): Promise<GroupActionState> {
+  const t = await getTranslations();
   const name = String(formData.get("name") ?? "").trim();
   const nickname = String(formData.get("nickname") ?? "").trim();
   const tournamentId = String(formData.get("tournament_id") ?? "").trim();
 
   if (!name || !nickname || !tournamentId) {
-    return { error: "Palun täida kõik väljad." };
+    return { error: t("group.errorFillFields") };
   }
 
   if (nickname.length < 2) {
-    return { error: "Hüüdnimi peab olema vähemalt 2 tähemärki." };
+    return { error: t("group.errorNicknameMin") };
   }
 
   const supabase = await createClient();
@@ -31,7 +33,7 @@ export async function createPredictionGroup(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Pead olema sisse logitud." };
+    return { error: t("group.errorMustLogin") };
   }
 
   const { data: group, error: groupError } = await supabase
@@ -45,7 +47,7 @@ export async function createPredictionGroup(
     .single();
 
   if (groupError || !group) {
-    return { error: groupError?.message ?? "Grupi loomine ebaõnnestus." };
+    return { error: groupError?.message ?? t("group.errorCreateGroup") };
   }
 
   const { error: memberError } = await supabase.from("group_members").insert({
@@ -67,11 +69,12 @@ export async function inviteToGroup(
   _prevState: GroupActionState,
   formData: FormData,
 ): Promise<GroupActionState> {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "").trim();
   const emailsRaw = String(formData.get("emails") ?? "").trim();
 
   if (!groupId || !emailsRaw) {
-    return { error: "Sisesta vähemalt üks e-mail." };
+    return { error: t("group.errorEmailRequired") };
   }
 
   const emails = [
@@ -84,7 +87,7 @@ export async function inviteToGroup(
   ];
 
   if (emails.length === 0) {
-    return { error: "Sisesta kehtiv e-mail." };
+    return { error: t("group.errorEmailInvalid") };
   }
 
   const supabase = await createClient();
@@ -93,7 +96,7 @@ export async function inviteToGroup(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Pead olema sisse logitud." };
+    return { error: t("group.errorMustLogin") };
   }
 
   const { data: membership } = await supabase
@@ -104,7 +107,7 @@ export async function inviteToGroup(
     .maybeSingle();
 
   if (membership?.role !== "admin") {
-    return { error: "Ainult grupi admin saab kutsed saata." };
+    return { error: t("group.errorAdminOnly") };
   }
 
   const { error } = await supabase.from("group_invitations").upsert(
@@ -124,7 +127,10 @@ export async function inviteToGroup(
 
   revalidatePath(`/groups/${groupId}`);
   return {
-    success: `Kutse loodud ${emails.length} aadressile. Saada neile kutse link allpool.`,
+    success:
+      emails.length === 1
+        ? t("group.inviteCreated", { email: emails[0] })
+        : t("group.inviteEachGetsLink"),
   };
 }
 
@@ -132,12 +138,13 @@ export async function acceptInvitation(
   _prevState: GroupActionState,
   formData: FormData,
 ): Promise<GroupActionState> {
+  const t = await getTranslations();
   const token = String(formData.get("token") ?? "").trim();
   const nickname = String(formData.get("nickname") ?? "").trim();
   const restoreRaw = String(formData.get("restore_history") ?? "").trim();
 
   if (!token || !nickname) {
-    return { error: "Palun sisesta hüüdnimi." };
+    return { error: t("group.errorNicknameRequired") };
   }
 
   let restoreHistory: boolean | null = null;
@@ -166,11 +173,12 @@ export async function removeGroupMember(
   _prevState: GroupActionState,
   formData: FormData,
 ): Promise<GroupActionState> {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "").trim();
   const userId = String(formData.get("user_id") ?? "").trim();
 
   if (!groupId || !userId) {
-    return { error: "Mängija puudub." };
+    return { error: t("group.errorMemberMissing") };
   }
 
   const supabase = await createClient();
@@ -185,18 +193,19 @@ export async function removeGroupMember(
 
   revalidatePath(`/groups/${groupId}`);
   revalidatePath("/dashboard");
-  return { success: "Mängija eemaldatud." };
+  return { success: t("group.removeSuccess") };
 }
 
 export async function revokeInvitation(
   _prevState: GroupActionState,
   formData: FormData,
 ): Promise<GroupActionState> {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "").trim();
   const invitationId = String(formData.get("invitation_id") ?? "").trim();
 
   if (!groupId || !invitationId) {
-    return { error: "Kutse puudub." };
+    return { error: t("group.errorInviteMissing") };
   }
 
   const supabase = await createClient();
@@ -209,22 +218,23 @@ export async function revokeInvitation(
   }
 
   revalidatePath(`/groups/${groupId}`);
-  return { success: "Kutse kustutatud." };
+  return { success: t("group.inviteDeleted") };
 }
 
 export async function updateMyNickname(
   _prevState: GroupActionState,
   formData: FormData,
 ): Promise<GroupActionState> {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "").trim();
   const nickname = String(formData.get("nickname") ?? "").trim();
 
   if (!groupId || !nickname) {
-    return { error: "Palun sisesta mängijanimi." };
+    return { error: t("group.errorNicknameRequired") };
   }
 
   if (nickname.length < 2) {
-    return { error: "Mängijanimi peab olema vähemalt 2 tähemärki." };
+    return { error: t("group.errorNicknameLength") };
   }
 
   const supabase = await createClient();
@@ -239,5 +249,5 @@ export async function updateMyNickname(
 
   revalidatePath(`/groups/${groupId}`);
   revalidatePath("/dashboard");
-  return { success: "Mängijanimi uuendatud." };
+  return { success: t("group.nicknameUpdated") };
 }

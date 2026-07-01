@@ -7,6 +7,7 @@ import {
   register,
   type AuthActionState,
 } from "@/lib/auth/actions";
+import { useTranslations } from "@/lib/i18n/provider";
 
 const initialState: AuthActionState = {};
 
@@ -19,13 +20,15 @@ type AuthFormProps = {
 };
 
 function SubmitButton({ label, pending }: { label: string; pending: boolean }) {
+  const t = useTranslations();
+
   return (
     <button
       type="submit"
       disabled={pending}
       className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
     >
-      {pending ? "Palun oota…" : label}
+      {pending ? t("common.pleaseWait") : label}
     </button>
   );
 }
@@ -37,6 +40,7 @@ export function AuthForm({
   registerLink = "/register",
   loginLink = "/login",
 }: AuthFormProps) {
+  const t = useTranslations();
   const action = mode === "login" ? login : register;
   const [state, formAction, pending] = useActionState(action, initialState);
 
@@ -47,7 +51,7 @@ export function AuthForm({
       {mode === "register" && (
         <div>
           <label htmlFor="display_name" className="mb-1 block text-sm font-medium">
-            Nimi
+            {t("auth.displayName")}
           </label>
           <input
             id="display_name"
@@ -56,14 +60,14 @@ export function AuthForm({
             required
             autoComplete="name"
             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-emerald-600 focus:ring-2"
-            placeholder="Sinu nimi"
+            placeholder={t("auth.displayNamePlaceholder")}
           />
         </div>
       )}
 
       <div>
         <label htmlFor="email" className="mb-1 block text-sm font-medium">
-          E-mail
+          {t("auth.email")}
         </label>
         <input
           id="email"
@@ -80,7 +84,7 @@ export function AuthForm({
 
       <div>
         <label htmlFor="password" className="mb-1 block text-sm font-medium">
-          Parool
+          {t("auth.password")}
         </label>
         <input
           id="password"
@@ -99,7 +103,7 @@ export function AuthForm({
             htmlFor="password_confirm"
             className="mb-1 block text-sm font-medium"
           >
-            Korda parooli
+            {t("auth.confirmPassword")}
           </label>
           <input
             id="password_confirm"
@@ -120,23 +124,23 @@ export function AuthForm({
       )}
 
       <SubmitButton
-        label={mode === "login" ? "Logi sisse" : "Registreeru"}
+        label={mode === "login" ? t("auth.loginSubmit") : t("auth.registerSubmit")}
         pending={pending}
       />
 
       <p className="text-center text-sm text-zinc-600">
         {mode === "login" ? (
           <>
-            Pole kontot?{" "}
+            {t("auth.noAccount")}{" "}
             <Link href={registerLink} className="font-medium text-emerald-700 hover:underline">
-              Registreeru
+              {t("auth.registerSubmit")}
             </Link>
           </>
         ) : (
           <>
-            Juba registreeritud?{" "}
+            {t("auth.hasAccount")}{" "}
             <Link href={loginLink} className="font-medium text-emerald-700 hover:underline">
-              Logi sisse
+              {t("auth.loginSubmit")}
             </Link>
           </>
         )}

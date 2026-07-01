@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { SettingsMemberBonusEditor } from "@/components/settings/member-bonus-editor";
 import { SettingsPredictionEditor } from "@/components/settings/prediction-editor";
+import { formatDateTime } from "@/lib/i18n/format";
+import { useLocale, useTranslations } from "@/lib/i18n/provider";
+import { formatMatchTeams } from "@/lib/i18n/teams";
 import type { BonusQuestion } from "@/lib/bonus/queries";
 import type { BonusTeamOptions } from "@/lib/bonus/team-options";
 
@@ -50,15 +53,6 @@ type SettingsMemberPredictionsProps = {
   selectedUserId: string | null;
 };
 
-function formatKickoff(kickoffAt: string) {
-  return new Intl.DateTimeFormat("et-EE", {
-    day: "numeric",
-    month: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(kickoffAt));
-}
-
 function buildPredictionsUrl(
   groupId: string,
   playerId: string,
@@ -82,6 +76,8 @@ export function SettingsMemberPredictions({
   teamOptions,
   selectedUserId,
 }: SettingsMemberPredictionsProps) {
+  const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const predictionMap = new Map(
     predictions.map((prediction) => [prediction.match_id, prediction]),
@@ -89,7 +85,7 @@ export function SettingsMemberPredictions({
   const isBonusSection = selectedSection === ADMIN_PREDICTIONS_BONUS_SECTION;
 
   if (members.length === 0) {
-    return <p className="text-sm text-zinc-500">Grupis pole mängijaid.</p>;
+    return <p className="text-sm text-zinc-500">{t("settings.noMembers")}</p>;
   }
 
   const activeUserId = selectedUserId ?? members[0].user_id;
@@ -111,7 +107,7 @@ export function SettingsMemberPredictions({
             htmlFor="prediction-member"
             className="mb-1 block text-sm font-medium text-zinc-700"
           >
-            Mängija
+            {t("common.player")}
           </label>
           <select
             id="prediction-member"
@@ -132,7 +128,7 @@ export function SettingsMemberPredictions({
             htmlFor="prediction-section"
             className="mb-1 block text-sm font-medium text-zinc-700"
           >
-            Jaotus
+            {t("settings.section")}
           </label>
           <select
             id="prediction-section"
@@ -145,7 +141,9 @@ export function SettingsMemberPredictions({
                 {round.label}
               </option>
             ))}
-            <option value={ADMIN_PREDICTIONS_BONUS_SECTION}>Boonus</option>
+            <option value={ADMIN_PREDICTIONS_BONUS_SECTION}>
+              {t("settings.bonusSection")}
+            </option>
           </select>
         </div>
       </div>
@@ -153,13 +151,13 @@ export function SettingsMemberPredictions({
       {activeMember && (
         <div className="space-y-2">
           <p className="text-sm text-zinc-600">
-            {isBonusSection ? "Boonused" : "Ennustused"}:{" "}
+            {isBonusSection ? t("settings.bonusSection") : t("settings.predictionsSection")}{" "}
             <span className="font-medium text-zinc-900">{activeMember.nickname}</span>
           </p>
 
           {isBonusSection ? (
             bonusPredictions.length === 0 ? (
-              <p className="text-sm text-zinc-500">Boonusküsimusi pole.</p>
+              <p className="text-sm text-zinc-500">{t("settings.noBonusQuestions")}</p>
             ) : (
               bonusPredictions.map(({ question, answer }) => (
                 <SettingsMemberBonusEditor
@@ -174,7 +172,7 @@ export function SettingsMemberPredictions({
               ))
             )
           ) : matches.length === 0 ? (
-            <p className="text-sm text-zinc-500">Sellel mängupäeval mänge pole.</p>
+            <p className="text-sm text-zinc-500">{t("settings.noMatchesRound")}</p>
           ) : (
             matches.map((match) => {
               const prediction = predictionMap.get(match.id);
@@ -184,8 +182,8 @@ export function SettingsMemberPredictions({
                   groupId={groupId}
                   userId={activeUserId}
                   matchId={match.id}
-                  matchLabel={`${match.home_team} – ${match.away_team}`}
-                  kickoffLabel={formatKickoff(match.kickoff_at)}
+                  matchLabel={formatMatchTeams(match.home_team, match.away_team, locale)}
+                  kickoffLabel={formatDateTime(match.kickoff_at, locale)}
                   homeGoals={prediction?.home_goals ?? null}
                   awayGoals={prediction?.away_goals ?? null}
                 />

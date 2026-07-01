@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "@/lib/i18n/provider";
 
 export function PredictionCentreTabs({ groupId }: { groupId: string }) {
   const pathname = usePathname();
+  const t = useTranslations();
   const base = `/groups/${groupId}/prediction-centre`;
   const bonusPath = `${base}/bonus`;
 
   const tabs = [
-    { href: base, label: "Mängud", key: "matches" },
-    { href: bonusPath, label: "Boonus", key: "bonus" },
+    { href: base, label: t("nav.matches"), key: "matches" },
+    { href: bonusPath, label: t("nav.bonus"), key: "bonus" },
   ];
 
   return (

@@ -6,6 +6,8 @@ import {
   type BonusActionState,
 } from "@/lib/bonus/actions";
 import { BonusTeamSelect } from "@/components/bonus/bonus-team-select";
+import { useLocale, useTranslations } from "@/lib/i18n/provider";
+import { translateTeamName } from "@/lib/i18n/teams";
 import type { BonusQuestionWithPrediction } from "@/lib/bonus/queries";
 import {
   getTeamOptionsForQuestion,
@@ -36,13 +38,17 @@ function BonusField({
   bonusPoints: number;
   teamOptions: BonusTeamOptions;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   const options = getTeamOptionsForQuestion(question, teamOptions);
 
   if (locked) {
     return (
       <div className="rounded-lg bg-zinc-50 px-3 py-2">
         <p className="text-sm font-medium text-zinc-900">
-          {question.my_answer ?? "—"}
+          {question.my_answer
+            ? translateTeamName(question.my_answer, locale)
+            : t("common.dash")}
         </p>
       </div>
     );
@@ -73,6 +79,7 @@ export function BonusForm({
   topScorer,
   semifinalists,
 }: BonusFormProps) {
+  const t = useTranslations();
   const [state, formAction, pending] = useActionState(
     saveBonusPredictions,
     initialState,
@@ -84,12 +91,12 @@ export function BonusForm({
 
       {locked && (
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Boonused on lukustatud — turniiri esimene mäng on alanud.
+          {t("bonus.locked")}
         </p>
       )}
 
       <section className="space-y-3">
-        <h3 className="font-medium text-zinc-900">Grupivõitjad</h3>
+        <h3 className="font-medium text-zinc-900">{t("bonus.groupWinners")}</h3>
         <div className="grid gap-3 sm:grid-cols-2">
           {groupWinners.map((question) => (
             <BonusField
@@ -127,7 +134,7 @@ export function BonusForm({
 
       {semifinalists.length > 0 && (
         <section className="space-y-3">
-          <h3 className="font-medium text-zinc-900">4 poolfinaalisti</h3>
+          <h3 className="font-medium text-zinc-900">{t("bonus.semifinalists")}</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             {semifinalists.map((question) => (
               <BonusField
@@ -157,7 +164,7 @@ export function BonusForm({
           disabled={pending}
           className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
         >
-          {pending ? "Salvestan…" : "Salvesta boonused"}
+          {pending ? t("common.saving") : t("bonus.saveBonus")}
         </button>
       )}
     </form>

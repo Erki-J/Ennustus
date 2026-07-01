@@ -5,6 +5,7 @@ import {
   revokeInvitation,
   type GroupActionState,
 } from "@/lib/groups/actions";
+import { useTranslations } from "@/lib/i18n/provider";
 
 const initialState: GroupActionState = {};
 
@@ -14,6 +15,7 @@ type InviteRevokeFormProps = {
 };
 
 export function InviteRevokeForm({ groupId, invitationId }: InviteRevokeFormProps) {
+  const t = useTranslations();
   const [state, formAction, pending] = useActionState(revokeInvitation, initialState);
 
   return (
@@ -25,7 +27,7 @@ export function InviteRevokeForm({ groupId, invitationId }: InviteRevokeFormProp
         disabled={pending}
         className="rounded-lg bg-white px-3 py-1.5 text-sm text-red-700 ring-1 ring-red-200 hover:bg-red-50 disabled:opacity-60"
       >
-        {pending ? "…" : "Kustuta"}
+        {pending ? "…" : t("common.delete")}
       </button>
       {state.error && (
         <p className="mt-2 text-xs text-red-600">{state.error}</p>

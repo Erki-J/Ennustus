@@ -1,7 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
 import { updateMyLocale, type SettingsActionState } from "@/lib/settings/actions";
+import { useTranslations } from "@/lib/i18n/provider";
 import { LOCALE_LABELS, SUPPORTED_LOCALES, type AppLocale } from "@/lib/settings/locale";
 
 const initialState: SettingsActionState = {};
@@ -11,13 +13,21 @@ type LocaleFormProps = {
 };
 
 export function LocaleForm({ locale }: LocaleFormProps) {
+  const t = useTranslations();
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(updateMyLocale, initialState);
+
+  useEffect(() => {
+    if (state.success) {
+      router.refresh();
+    }
+  }, [state.success, router]);
 
   return (
     <form action={formAction} className="space-y-4">
       <div className="max-w-xs">
         <label htmlFor="locale" className="mb-1 block text-sm font-medium text-zinc-700">
-          Keel
+          {t("settings.language")}
         </label>
         <select
           id="locale"
@@ -31,16 +41,14 @@ export function LocaleForm({ locale }: LocaleFormProps) {
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-zinc-500">
-          Vali rakenduse keel. Praegu on täielikult toetatud eesti keel.
-        </p>
+        <p className="mt-1 text-xs text-zinc-500">{t("settings.languageHint")}</p>
       </div>
       <button
         type="submit"
         disabled={pending}
         className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
       >
-        {pending ? "Salvestan…" : "Salvesta"}
+        {pending ? t("common.saving") : t("common.save")}
       </button>
       {state.error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>

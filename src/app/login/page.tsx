@@ -1,10 +1,12 @@
 import { AuthForm } from "@/components/auth-form";
+import { getI18n } from "@/lib/i18n/server";
 
 type LoginPageProps = {
   searchParams: Promise<{ next?: string; email?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { t } = await getI18n();
   const { next, email } = await searchParams;
   const redirectTo = next && next.startsWith("/") ? next : "/dashboard";
   const query = new URLSearchParams();
@@ -23,12 +25,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
         <div className="mb-6 text-center">
           <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">
-            MM / EM ennustus
+            {t("auth.tournamentHint")}
           </p>
-          <h1 className="mt-2 text-2xl font-semibold text-zinc-900">Logi sisse</h1>
+          <h1 className="mt-2 text-2xl font-semibold text-zinc-900">{t("auth.loginTitle")}</h1>
           {email && (
             <p className="mt-2 text-sm text-zinc-500">
-              Kutse on saadetud aadressile: {email}
+              {t("auth.inviteSentTo", { email })}
             </p>
           )}
         </div>

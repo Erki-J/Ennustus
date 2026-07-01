@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getBonusPointsByUser } from "@/lib/bonus/queries";
 import { getGroupContext } from "@/lib/groups/context";
+import { getLocale } from "@/lib/i18n/server";
 import { getGroupMatchdays } from "@/lib/matchdays/queries";
 import { OVERVIEW_COLUMN_DEFS } from "@/lib/general-overview/columns";
 
@@ -25,7 +26,8 @@ export async function getGeneralOverview(groupId: string) {
     return { columns: [] as OverviewColumn[], rows: [] as OverviewRow[] };
   }
 
-  const { rounds } = await getGroupMatchdays(groupId);
+  const locale = await getLocale();
+  const { rounds } = await getGroupMatchdays(groupId, locale);
 
   const columns: OverviewColumn[] = OVERVIEW_COLUMN_DEFS.map((def) => {
     const round = rounds.find(

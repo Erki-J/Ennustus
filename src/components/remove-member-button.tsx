@@ -6,6 +6,7 @@ import {
   removeGroupMember,
   type GroupActionState,
 } from "@/lib/groups/actions";
+import { useTranslations } from "@/lib/i18n/provider";
 
 const initialState: GroupActionState = {};
 
@@ -18,6 +19,7 @@ export function RemoveMemberButton({
   userId: string;
   nickname: string;
 }) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(removeGroupMember, initialState);
   const router = useRouter();
@@ -36,7 +38,7 @@ export function RemoveMemberButton({
         onClick={() => setOpen(true)}
         className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
       >
-        Kustuta
+        {t("common.delete")}
       </button>
 
       {open && (
@@ -48,16 +50,10 @@ export function RemoveMemberButton({
             aria-labelledby="remove-member-title"
           >
             <h3 id="remove-member-title" className="text-lg font-semibold text-zinc-900">
-              Kustuta mängija?
+              {t("group.removeTitle")}
             </h3>
             <p className="mt-2 text-sm text-zinc-600">
-              Kas oled kindel, et soovid mängija{" "}
-              <span className="font-medium text-zinc-900">{nickname}</span> grupist
-              eemaldada?
-            </p>
-            <p className="mt-2 text-sm text-zinc-600">
-              Tema ennustused salvestatakse ajaloo. Kui sama e-mailiga hiljem uuesti
-              liitutakse, saab valida, kas taastada varasem seis.
+              {t("group.removeConfirm", { nickname })}
             </p>
 
             {state.error && (
@@ -73,7 +69,7 @@ export function RemoveMemberButton({
                 disabled={pending}
                 className="btn-secondary px-4 py-2 text-sm font-medium disabled:opacity-60"
               >
-                Tühista
+                {t("common.cancel")}
               </button>
               <form action={formAction}>
                 <input type="hidden" name="group_id" value={groupId} />
@@ -83,7 +79,7 @@ export function RemoveMemberButton({
                   disabled={pending}
                   className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
                 >
-                  {pending ? "Kustutan…" : "Jah, kustuta"}
+                  {pending ? t("common.deleting") : t("common.yesDelete")}
                 </button>
               </form>
             </div>

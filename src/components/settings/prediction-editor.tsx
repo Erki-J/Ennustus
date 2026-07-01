@@ -5,6 +5,7 @@ import {
   adminSaveMemberPrediction,
   type SettingsActionState,
 } from "@/lib/settings/actions";
+import { useTranslations } from "@/lib/i18n/provider";
 
 const initialState: SettingsActionState = {};
 
@@ -27,6 +28,7 @@ export function SettingsPredictionEditor({
   homeGoals,
   awayGoals,
 }: SettingsPredictionEditorProps) {
+  const t = useTranslations();
   const [state, formAction, pending] = useActionState(
     adminSaveMemberPrediction,
     initialState,
@@ -67,7 +69,7 @@ export function SettingsPredictionEditor({
         disabled={pending}
         className="rounded bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
       >
-        {pending ? "…" : "Salvesta"}
+        {pending ? "…" : t("common.save")}
       </button>
       {state.error && <p className="w-full text-xs text-red-600">{state.error}</p>}
       {state.success && (

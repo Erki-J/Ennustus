@@ -3,6 +3,7 @@ import { MatchdayNav } from "@/components/matchday-nav";
 import { PredictionCentreMatchRow } from "@/components/prediction-centre/match-row";
 import { getProfile } from "@/lib/auth/get-profile";
 import { getGroupContext } from "@/lib/groups/context";
+import { getI18n } from "@/lib/i18n/server";
 import { getGroupMatchdays } from "@/lib/matchdays/queries";
 import { getPredictionCentreMatches } from "@/lib/prediction-centre/queries";
 
@@ -13,6 +14,7 @@ type PredictionCentreRoundPageProps = {
 export default async function PredictionCentreRoundPage({
   params,
 }: PredictionCentreRoundPageProps) {
+  const { locale, t } = await getI18n();
   const { groupId, roundKey } = await params;
   const profile = await getProfile();
 
@@ -26,7 +28,7 @@ export default async function PredictionCentreRoundPage({
     notFound();
   }
 
-  const { rounds } = await getGroupMatchdays(groupId);
+  const { rounds } = await getGroupMatchdays(groupId, locale);
   const round = rounds.find((item) => item.key === roundKey);
 
   if (!round) {
@@ -40,11 +42,9 @@ export default async function PredictionCentreRoundPage({
       <div className="space-y-4 border-b border-zinc-100 px-6 py-4">
         <div>
           <h2 className="font-semibold text-zinc-900">
-            Ennustuskeskus · {round.label}
+            {t("predictionCentre.roundTitle", { round: round.label })}
           </h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            Ennustus lukustub mängu alguses. Teiste tippe näed ülevaates pärast kickoff&apos;i.
-          </p>
+          <p className="mt-1 text-sm text-zinc-600">{t("predictionCentre.lockHint")}</p>
         </div>
         <MatchdayNav
           basePath={`/groups/${groupId}/prediction-centre`}
@@ -55,15 +55,15 @@ export default async function PredictionCentreRoundPage({
 
       {matches.length === 0 ? (
         <p className="px-6 py-8 text-sm text-zinc-500">
-          Sellel mängupäeval mänge pole.
+          {t("predictionCentre.noMatchesRound")}
         </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-left text-sm">
             <thead className="bg-zinc-50 text-zinc-500">
               <tr>
-                <th className="px-3 py-3 font-medium">Mäng</th>
-                <th className="px-3 py-3 font-medium">Sinu ennustus</th>
+                <th className="px-3 py-3 font-medium">{t("common.match")}</th>
+                <th className="px-3 py-3 font-medium">{t("common.yourPrediction")}</th>
               </tr>
             </thead>
             <tbody>

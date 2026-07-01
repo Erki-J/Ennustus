@@ -1,3 +1,7 @@
+"use client";
+
+import { useLocale, useTranslations } from "@/lib/i18n/provider";
+import { translateTeamName } from "@/lib/i18n/teams";
 import { teamOptionsWithCurrent } from "@/lib/bonus/team-options";
 
 type BonusTeamSelectProps = {
@@ -13,11 +17,14 @@ export function BonusTeamSelect({
   name,
   options,
   defaultValue,
-  placeholder = "Vali meeskond",
+  placeholder,
   className = "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm",
   required = true,
 }: BonusTeamSelectProps) {
+  const t = useTranslations();
+  const locale = useLocale();
   const displayOptions = teamOptionsWithCurrent(options, defaultValue);
+  const selectPlaceholder = placeholder ?? t("bonus.selectTeam");
 
   if (displayOptions.length === 0) {
     return (
@@ -25,7 +32,7 @@ export function BonusTeamSelect({
         name={name}
         type="text"
         defaultValue={defaultValue ?? ""}
-        placeholder="Meeskond"
+        placeholder={t("bonus.teamPlaceholder")}
         required={required}
         className={className}
       />
@@ -39,10 +46,10 @@ export function BonusTeamSelect({
       required={required}
       className={className}
     >
-      <option value="">{placeholder}</option>
+      <option value="">{selectPlaceholder}</option>
       {displayOptions.map((team) => (
         <option key={team} value={team}>
-          {team}
+          {translateTeamName(team, locale)}
         </option>
       ))}
     </select>

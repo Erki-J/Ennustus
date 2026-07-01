@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "@/lib/i18n/provider";
 import type { MatchdayRound } from "@/lib/matchdays/queries";
 
 type MatchdayNavProps = {
@@ -18,6 +21,7 @@ export function MatchdayNav({
   showBonusTab = false,
   bonusActive = false,
 }: MatchdayNavProps) {
+  const t = useTranslations();
   const currentIndex = rounds.findIndex((round) => round.key === currentKey);
   const safeIndex = currentIndex >= 0 ? currentIndex : 0;
   const prevRound = safeIndex > 0 ? rounds[safeIndex - 1] : null;
@@ -36,7 +40,7 @@ export function MatchdayNav({
           <Link
             href={`${basePath}/${prevRound.key}`}
             className="rounded-l-lg px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-emerald-50 hover:text-emerald-900"
-            aria-label="Eelmine mängupäev"
+            aria-label={t("nav.prevMatchday")}
           >
             ‹
           </Link>
@@ -44,13 +48,13 @@ export function MatchdayNav({
           <span className="rounded-l-lg px-3 py-1.5 text-sm text-zinc-300">‹</span>
         )}
         <span className="border-x border-zinc-200 px-4 py-1.5 text-sm font-medium text-zinc-900">
-          {currentRound?.label ?? "—"}
+          {currentRound?.label ?? t("common.dash")}
         </span>
         {nextRound ? (
           <Link
             href={`${basePath}/${nextRound.key}`}
             className="rounded-r-lg px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-emerald-50 hover:text-emerald-900"
-            aria-label="Järgmine mängupäev"
+            aria-label={t("nav.nextMatchday")}
           >
             ›
           </Link>
@@ -68,7 +72,7 @@ export function MatchdayNav({
               : "nav-link-inactive border border-zinc-200 bg-white"
           }`}
         >
-          Boonus
+          {t("nav.bonus")}
         </Link>
       )}
     </div>

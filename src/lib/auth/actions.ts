@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getTranslations } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthActionState = {
@@ -19,12 +20,13 @@ export async function login(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  const t = await getTranslations();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const next = safeRedirectPath(String(formData.get("next") ?? ""));
 
   if (!email || !password) {
-    return { error: "Palun sisesta e-mail ja parool." };
+    return { error: t("auth.errorEmailPassword") };
   }
 
   const supabase = await createClient();
@@ -34,17 +36,11 @@ export async function login(
     const message = error.message.toLowerCase();
 
     if (message.includes("email not confirmed")) {
-      return {
-        error:
-          "E-mail pole kinnitatud. Supabase: Authentication → Providers → Email → lülita Confirm email välja, seejärel registreeru uuesti.",
-      };
+      return { error: t("auth.errorEmailNotConfirmed") };
     }
 
     if (message.includes("invalid login credentials")) {
-      return {
-        error:
-          "Vale e-mail või parool. Kui sul pole veel kontot, kasuta allpool „Registreeru”.",
-      };
+      return { error: t("auth.errorInvalidCredentials") };
     }
 
     return { error: error.message };
@@ -58,6 +54,7 @@ export async function register(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  const t = await getTranslations();
   const displayName = String(formData.get("display_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
@@ -65,15 +62,15 @@ export async function register(
   const next = safeRedirectPath(String(formData.get("next") ?? ""));
 
   if (!displayName || !email || !password) {
-    return { error: "Palun täida kõik väljad." };
+    return { error: t("auth.errorFillAll") };
   }
 
   if (password.length < 8) {
-    return { error: "Parool peab olema vähemalt 8 tähemärki." };
+    return { error: t("auth.errorPasswordLength") };
   }
 
   if (password !== passwordConfirm) {
-    return { error: "Paroolid ei kattu." };
+    return { error: t("auth.errorPasswordMismatch") };
   }
 
   const supabase = await createClient();

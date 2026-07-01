@@ -4,8 +4,10 @@ import { AppHeader } from "@/components/app-header";
 import { CreateGroupForm } from "@/components/create-group-form";
 import { getProfile } from "@/lib/auth/get-profile";
 import { getActiveTournaments } from "@/lib/groups/queries";
+import { getI18n } from "@/lib/i18n/server";
 
 export default async function NewGroupPage() {
+  const { t } = await getI18n();
   const profile = await getProfile();
 
   if (!profile) {
@@ -20,8 +22,7 @@ export default async function NewGroupPage() {
         <AppHeader profile={profile} />
         <main className="mx-auto max-w-lg px-4 py-8">
           <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900">
-            Turniire pole andmebaasis. Käivita Supabase SQL Editoris fail{" "}
-            <code>supabase/migration-002-groups.sql</code>.
+            {t("group.noTournaments")}
           </p>
         </main>
       </div>
@@ -37,14 +38,12 @@ export default async function NewGroupPage() {
             href="/dashboard"
             className="text-sm text-zinc-500 hover:text-zinc-700 hover:underline"
           >
-            ← Tagasi
+            {t("common.back")}
           </Link>
           <h1 className="mt-3 text-2xl font-semibold text-zinc-900">
-            Loo uus ennustus
+            {t("group.createGroupTitle")}
           </h1>
-          <p className="mt-1 text-zinc-600">
-            Vali turniir, anna grupile nimi ja saad kohe adminina kutsed saata.
-          </p>
+          <p className="mt-1 text-zinc-600">{t("group.createGroupSubtitle")}</p>
         </div>
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">

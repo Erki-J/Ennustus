@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 
 export type BonusActionState = {
@@ -31,10 +32,11 @@ export async function saveBonusPredictions(
   _prevState: BonusActionState,
   formData: FormData,
 ): Promise<BonusActionState> {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "");
 
   if (!groupId) {
-    return { error: "Grupp puudub." };
+    return { error: t("bonus.errorGroupMissing") };
   }
 
   const supabase = await createClient();
@@ -67,23 +69,24 @@ export async function saveBonusPredictions(
   }
 
   if (saved === 0) {
-    return { error: "Sisesta vähemalt üks vastus." };
+    return { error: t("bonus.errorAnswerRequired") };
   }
 
   revalidateGroupModules(groupId);
-  return { success: "Boonused salvestatud." };
+  return { success: t("bonus.bonusSaved") };
 }
 
 export async function setBonusCorrectAnswer(
   _prevState: BonusActionState,
   formData: FormData,
 ): Promise<BonusActionState> {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "");
   const questionId = String(formData.get("question_id") ?? "");
   const correctAnswer = String(formData.get("correct_answer") ?? "").trim();
 
   if (!groupId || !questionId) {
-    return { error: "Puuduvad andmed." };
+    return { error: t("bonus.errorDataMissing") };
   }
 
   const supabase = await createClient();
@@ -97,20 +100,21 @@ export async function setBonusCorrectAnswer(
   }
 
   revalidateGroupModules(groupId);
-  return { success: "Õige vastus salvestatud, punktid uuendatud." };
+  return { success: t("bonus.answerSaved") };
 }
 
 export async function adminSaveMemberBonus(
   _prevState: BonusActionState,
   formData: FormData,
 ): Promise<BonusActionState> {
+  const t = await getTranslations();
   const groupId = String(formData.get("group_id") ?? "");
   const userId = String(formData.get("user_id") ?? "");
   const questionId = String(formData.get("question_id") ?? "");
   const answer = String(formData.get("answer") ?? "").trim();
 
   if (!groupId || !userId || !questionId || !answer) {
-    return { error: "Palun täida kõik väljad." };
+    return { error: t("group.errorFillFields") };
   }
 
   const supabase = await createClient();
@@ -126,5 +130,5 @@ export async function adminSaveMemberBonus(
   }
 
   revalidateGroupModules(groupId);
-  return { success: "Boonus uuendatud." };
+  return { success: t("bonus.bonusUpdated") };
 }

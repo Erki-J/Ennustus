@@ -1,12 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { sortTeamNames } from "@/lib/i18n/teams";
 import type { BonusTeamOptions } from "@/lib/bonus/team-options";
-
-function sortTeams(teams: Iterable<string>): string[] {
-  return [...teams].sort((a, b) => a.localeCompare(b, "et"));
-}
+import type { AppLocale } from "@/lib/settings/locale";
 
 export async function fetchBonusTeamOptions(
   tournamentId: string,
+  locale: AppLocale = "et",
 ): Promise<BonusTeamOptions> {
   const supabase = await createClient();
 
@@ -36,11 +35,11 @@ export async function fetchBonusTeamOptions(
 
   const teamsByGroup: Record<string, string[]> = {};
   for (const [code, teams] of Object.entries(teamsByGroupSets)) {
-    teamsByGroup[code] = sortTeams(teams);
+    teamsByGroup[code] = sortTeamNames([...teams], locale);
   }
 
   return {
-    allTeams: sortTeams(allTeamsSet),
+    allTeams: sortTeamNames([...allTeamsSet], locale),
     teamsByGroup,
   };
 }

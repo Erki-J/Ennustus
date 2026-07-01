@@ -1,17 +1,23 @@
+import { getRequestLocale } from "@/lib/i18n/get-locale";
+import { getMessages } from "@/lib/i18n/messages";
+import { createTranslator } from "@/lib/i18n/translate";
 import type { MetadataRoute } from "next";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const locale = await getRequestLocale();
+  const t = createTranslator(getMessages(locale));
+
   return {
-    name: "Ennustamine",
-    short_name: "Ennustamine",
-    description: "Jalgpalli MM ja EM ennustusmäng",
+    name: t("common.appName"),
+    short_name: t("common.appName"),
+    description: t("common.appTagline"),
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
     background_color: "#fafafa",
     theme_color: "#059669",
-    lang: "et",
+    lang: locale,
     categories: ["sports", "games"],
     icons: [
       {

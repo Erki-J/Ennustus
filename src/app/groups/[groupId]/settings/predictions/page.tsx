@@ -7,6 +7,7 @@ import {
   getAdminMemberBonus,
   getAdminPredictionMatrix,
 } from "@/lib/settings/actions";
+import { getI18n } from "@/lib/i18n/server";
 
 type SettingsPredictionsPageProps = {
   params: Promise<{ groupId: string }>;
@@ -17,6 +18,7 @@ export default async function SettingsPredictionsPage({
   params,
   searchParams,
 }: SettingsPredictionsPageProps) {
+  const { t } = await getI18n();
   const { groupId } = await params;
   const { player, section } = await searchParams;
   const isBonusSection = section === ADMIN_PREDICTIONS_BONUS_SECTION;
@@ -59,11 +61,8 @@ export default async function SettingsPredictionsPage({
 
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-      <h2 className="font-semibold text-zinc-900">Muuda mängijate ennustusi</h2>
-      <p className="mt-1 text-sm text-zinc-600">
-        Vali mängija ja jaotus (mängupäev või boonus). Punktid arvutatakse
-        automaatselt uuesti.
-      </p>
+      <h2 className="font-semibold text-zinc-900">{t("settings.predictionsTitle")}</h2>
+      <p className="mt-1 text-sm text-zinc-600">{t("settings.predictionsHint")}</p>
       <div className="mt-4">
         <SettingsMemberPredictions
           groupId={groupId}

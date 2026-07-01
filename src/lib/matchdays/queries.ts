@@ -5,6 +5,7 @@ import {
   parseMatchdayParam,
 } from "@/lib/matchdays/labels";
 import { compareMatchdayRounds } from "@/lib/matchdays/sort";
+import type { AppLocale } from "@/lib/settings/locale";
 import type { Match } from "@/types/database";
 
 const MATCH_SELECT =
@@ -21,6 +22,7 @@ export type MatchdayRound = {
 
 export async function getTournamentMatchdays(
   tournamentId: string,
+  locale: AppLocale = "et",
 ): Promise<MatchdayRound[]> {
   const supabase = await createClient();
 
@@ -50,7 +52,7 @@ export async function getTournamentMatchdays(
         key,
         stage: match.stage,
         matchday: match.matchday,
-        label: matchdayLabel(match.stage, match.matchday),
+        label: matchdayLabel(match.stage, match.matchday, locale),
         sort_order: match.sort_order,
         matches: [match],
       });
@@ -99,7 +101,7 @@ export function getActiveMatchdayRound(rounds: MatchdayRound[]): MatchdayRound {
   return rounds[rounds.length - 1];
 }
 
-export async function getGroupMatchdays(groupId: string) {
+export async function getGroupMatchdays(groupId: string, locale: AppLocale = "et") {
   const supabase = await createClient();
 
   const { data: group } = await supabase
@@ -112,7 +114,7 @@ export async function getGroupMatchdays(groupId: string) {
     return { rounds: [] as MatchdayRound[], tournamentId: null as string | null };
   }
 
-  const rounds = await getTournamentMatchdays(group.tournament_id);
+  const rounds = await getTournamentMatchdays(group.tournament_id, locale);
 
   return { rounds, tournamentId: group.tournament_id };
 }

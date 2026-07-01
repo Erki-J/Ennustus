@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/app-header";
 import { GroupNavLinks } from "@/components/group-nav-links";
 import { getProfile } from "@/lib/auth/get-profile";
 import { getGroupContext } from "@/lib/groups/context";
+import { getI18n } from "@/lib/i18n/server";
 
 export default async function GroupLayout({
   children,
@@ -12,6 +13,7 @@ export default async function GroupLayout({
   children: React.ReactNode;
   params: Promise<{ groupId: string }>;
 }) {
+  const { t } = await getI18n();
   const { groupId } = await params;
   const profile = await getProfile();
 
@@ -34,7 +36,7 @@ export default async function GroupLayout({
             href="/dashboard"
             className="text-sm text-zinc-500 hover:text-zinc-700 hover:underline"
           >
-            ← Minu ennustused
+            {t("common.backToDashboard")}
           </Link>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold text-zinc-900">
@@ -42,7 +44,7 @@ export default async function GroupLayout({
             </h1>
             {context.myRole === "admin" && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                Admin
+                {t("common.admin")}
               </span>
             )}
           </div>

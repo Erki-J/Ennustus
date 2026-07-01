@@ -2,18 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const generalTab = {
-  key: "general",
-  hrefSuffix: "/general",
-  label: "Üldine",
-} as const;
-
-const adminTabs = [
-  { key: "scoring", hrefSuffix: "/scoring", label: "Punktireeglid" },
-  { key: "predictions", hrefSuffix: "/predictions", label: "Muuda mängijate ennustusi" },
-  { key: "cron", hrefSuffix: "/cron", label: "Cron" },
-] as const;
+import { useTranslations } from "@/lib/i18n/provider";
 
 function tabClass(active: boolean) {
   return `rounded-lg px-3 py-2 text-sm font-medium transition ${
@@ -31,8 +20,23 @@ export function SettingsSubNav({
   isAdmin: boolean;
 }) {
   const pathname = usePathname();
+  const t = useTranslations();
   const base = `/groups/${groupId}/settings`;
-  const tabs = [generalTab, ...(isAdmin ? adminTabs : [])];
+
+  const tabs = [
+    { key: "general", hrefSuffix: "/general", label: t("settingsNav.general") },
+    ...(isAdmin
+      ? [
+          { key: "scoring", hrefSuffix: "/scoring", label: t("settingsNav.scoring") },
+          {
+            key: "predictions",
+            hrefSuffix: "/predictions",
+            label: t("settingsNav.predictions"),
+          },
+          { key: "cron", hrefSuffix: "/cron", label: t("settingsNav.cron") },
+        ]
+      : []),
+  ];
 
   return (
     <nav className="flex flex-wrap gap-2">
