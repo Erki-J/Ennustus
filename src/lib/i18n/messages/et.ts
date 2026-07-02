@@ -272,9 +272,11 @@ export const et = {
     vercelIntervalHint: "Siin seatud intervall kehtib iga cron käivituse kohta.",
     scoreImportHint:
       "Live skoor: API_FOOTBALL_KEY (soovitatav, MM 2026). Alternatiiv: FOOTBALL_DATA_API_KEY. Lõplik tulemus: openfootball JSON.",
+    bonusSyncHint:
+      "Boonused täituvad automaatselt: alagrupi võitja pärast grupi viimast mängu, turniiri võitja ja enim väravaid löönud meeskond pärast finaali.",
     cronSyncNow: "Uuenda skoorid kohe",
     cronSyncRunning: "Uuendan…",
-    cronSyncDone: "Uuendatud: {live} live, {scores} skoori.",
+    cronSyncDone: "Uuendatud: {live} live, {scores} skoori, {bonus} boonust.",
     cronSyncFailed: "Cron uuendus ebaõnnestus.",
     adminOnly: "Ainult admin saab cron'i käivitada.",
     cronEnabled: "Cron on sees",

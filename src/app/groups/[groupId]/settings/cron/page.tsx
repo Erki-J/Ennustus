@@ -70,6 +70,7 @@ export default async function SettingsCronPage({ params }: SettingsCronPageProps
           <li>{t("settings.vercelHobbyHint")}</li>
           <li>{t("settings.vercelIntervalHint")}</li>
           <li>{t("settings.scoreImportHint")}</li>
+          <li>{t("settings.bonusSyncHint")}</li>
         </ul>
       </div>
     </section>

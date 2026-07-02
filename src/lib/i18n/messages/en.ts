@@ -275,9 +275,11 @@ export const en = {
     vercelIntervalHint: "The interval set here applies per cron run.",
     scoreImportHint:
       "Live scores: API_FOOTBALL_KEY (recommended, WC 2026). Alternative: FOOTBALL_DATA_API_KEY. Final results: openfootball JSON.",
+    bonusSyncHint:
+      "Bonus answers fill automatically: group winners after the last group match, tournament winner and top-scoring team after the final.",
     cronSyncNow: "Update scores now",
     cronSyncRunning: "Updating…",
-    cronSyncDone: "Updated: {live} live, {scores} scores.",
+    cronSyncDone: "Updated: {live} live, {scores} scores, {bonus} bonus answers.",
     cronSyncFailed: "Cron update failed.",
     adminOnly: "Only admins can run cron sync.",
     cronEnabled: "Cron enabled",

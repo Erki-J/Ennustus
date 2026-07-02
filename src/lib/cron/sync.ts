@@ -1,3 +1,4 @@
+import { syncTournamentBonusResults } from "@/lib/cron/bonus/sync-bonus";
 import { parseCronSettings } from "@/lib/cron/settings";
 import { syncTournamentScores } from "@/lib/cron/scores/sync-scores";
 import {
@@ -22,6 +23,7 @@ export type CronSyncResult = {
   matchesInWindow: number;
   matchesUpdated: number;
   scoresUpdated: number;
+  bonusUpdated: number;
   details: string[];
 };
 
@@ -116,6 +118,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
       matchesInWindow: 0,
       matchesUpdated: 0,
       scoresUpdated: 0,
+      bonusUpdated: 0,
       details: ["Lisa SUPABASE_SERVICE_ROLE_KEY ja CRON_SECRET keskkonna muutujatesse."],
     };
   }
@@ -134,6 +137,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
       matchesInWindow: 0,
       matchesUpdated: 0,
       scoresUpdated: 0,
+      bonusUpdated: 0,
       details: [settingsError.message],
     };
   }
@@ -152,6 +156,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
       matchesInWindow: 0,
       matchesUpdated: 0,
       scoresUpdated: 0,
+      bonusUpdated: 0,
       details: [],
     };
   }
@@ -172,6 +177,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
       matchesInWindow: 0,
       matchesUpdated: 0,
       scoresUpdated: 0,
+      bonusUpdated: 0,
       details: [groupsError.message],
     };
   }
@@ -213,6 +219,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
   let totalInWindow = 0;
   let totalLiveUpdated = 0;
   let totalScoresUpdated = 0;
+  let totalBonusUpdated = 0;
   const details: string[] = [];
 
   for (const [tournamentId, config] of tournamentMap) {
@@ -254,6 +261,14 @@ export async function runCronSync(): Promise<CronSyncResult> {
     totalScoresUpdated += syncResult.scoresUpdated;
     details.push(...syncResult.details);
 
+    const bonusResult = await syncTournamentBonusResults(
+      admin,
+      tournamentId,
+      typedMatches,
+    );
+    totalBonusUpdated += bonusResult.bonusUpdated;
+    details.push(...bonusResult.details);
+
     for (const groupId of config.groupIds) {
       const { error: recalcError } = await admin.rpc("recalculate_group_match_points", {
         p_group_id: groupId,
@@ -279,6 +294,7 @@ export async function runCronSync(): Promise<CronSyncResult> {
     matchesInWindow: totalInWindow,
     matchesUpdated: totalLiveUpdated,
     scoresUpdated: totalScoresUpdated,
+    bonusUpdated: totalBonusUpdated,
     details,
   };
 }

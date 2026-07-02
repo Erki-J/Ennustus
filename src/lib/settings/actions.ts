@@ -561,11 +561,14 @@ export async function triggerCronSyncNow(
   revalidatePath(`/groups/${groupId}/settings/cron`);
   revalidatePath(`/groups/${groupId}/overview`, "layout");
   revalidatePath(`/groups/${groupId}/matches`, "layout");
+  revalidatePath(`/groups/${groupId}/bonus-results`);
+  revalidatePath(`/groups/${groupId}/general-overview`);
 
   const detail = result.details.at(-1);
   const summary = t("settings.cronSyncDone", {
     live: result.matchesUpdated,
     scores: result.scoresUpdated,
+    bonus: result.bonusUpdated,
   });
 
   return {
