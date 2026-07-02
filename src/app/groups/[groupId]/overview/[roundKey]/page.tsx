@@ -7,6 +7,7 @@ import { getI18n } from "@/lib/i18n/server";
 import type { AppLocale } from "@/lib/settings/locale";
 import { translateTeamName } from "@/lib/i18n/teams";
 import { getMatchdayOverview } from "@/lib/overview/queries";
+import { isMatchInProgress, LIVE_MATCH_BG_CLASS } from "@/lib/matches/in-progress";
 import { formatMatchScore } from "@/lib/scoring/calculate";
 import { OWN_ROW_CLASS } from "@/lib/ui/highlight";
 import { getMatchResultColorClass } from "@/lib/ui/match-result";
@@ -44,6 +45,10 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
 
   const matches = round.matches;
   const showGroupColumn = matches.some((match) => match.group_code);
+  const now = Date.now();
+  const inProgressMatchIds = new Set(
+    matches.filter((match) => isMatchInProgress(match, now)).map((match) => match.id),
+  );
 
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
@@ -71,25 +76,31 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
               <th className="sticky left-8 bg-zinc-50 px-3 py-2 font-medium">
                 {t("common.name")}
               </th>
-              {matches.map((match) => (
+              {matches.map((match) => {
+                const inProgress = inProgressMatchIds.has(match.id);
+
+                return (
                 <th
                   key={match.id}
-                  className="px-2 py-2 text-center font-medium"
+                  className={`px-2 py-2 text-center font-medium ${
+                    inProgress ? LIVE_MATCH_BG_CLASS : ""
+                  }`}
                   title={`${translateTeamName(match.home_team, locale)} – ${translateTeamName(match.away_team, locale)}`}
                 >
                   <span className="block">
                     {matchAbbreviation(match.home_team, match.away_team, locale)}
                   </span>
                   {(match.home_score !== null && match.away_score !== null) ||
-                  match.status === "live" ? (
+                  isMatchInProgress(match, now) ? (
                     <span
-                      className={`mt-0.5 block font-normal ${getMatchResultColorClass(match.status)}`}
+                      className={`mt-0.5 block font-normal ${getMatchResultColorClass(match.status, match, now)}`}
                     >
                       {formatMatchScore(match.home_score, match.away_score)}
                     </span>
                   ) : null}
                 </th>
-              ))}
+                );
+              })}
               <th
                 className="px-2 py-2 text-center font-medium"
                 title={t("overview.pointsTitle")}
@@ -117,9 +128,15 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
                 {row.cells.map((cell, cellIndex) => {
                   const match = matches[cellIndex];
                   const started = startedMatchIds.has(match.id);
+                  const inProgress = inProgressMatchIds.has(match.id);
 
                   return (
-                    <td key={cellIndex} className="px-2 py-2 text-center">
+                    <td
+                      key={cellIndex}
+                      className={`px-2 py-2 text-center ${
+                        inProgress ? LIVE_MATCH_BG_CLASS : ""
+                      }`}
+                    >
                       <OverviewPredictionCell cell={cell} matchStarted={started} />
                     </td>
                   );
@@ -151,8 +168,14 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
             </tr>
           </thead>
           <tbody>
-            {matches.map((match) => (
-              <tr key={match.id} className="border-t border-zinc-100">
+            {matches.map((match) => {
+              const inProgress = inProgressMatchIds.has(match.id);
+
+              return (
+              <tr
+                key={match.id}
+                className={`border-t border-zinc-100 ${inProgress ? LIVE_MATCH_BG_CLASS : ""}`}
+              >
                 <td className="px-4 py-2 text-zinc-600">
                   {formatDateTime(match.kickoff_at, locale)}
                 </td>
@@ -170,16 +193,17 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
                   </td>
                 )}
                 <td
-                  className={`px-4 py-2 font-medium ${getMatchResultColorClass(match.status)}`}
+                  className={`px-4 py-2 font-medium ${getMatchResultColorClass(match.status, match, now)}`}
                 >
                   {match.home_score !== null && match.away_score !== null
                     ? formatMatchScore(match.home_score, match.away_score)
-                    : match.status === "live"
+                    : isMatchInProgress(match, now)
                       ? t("common.live")
                       : t("common.dash")}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
