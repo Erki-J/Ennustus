@@ -2,8 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { syncKnockoutTeams } from "@/lib/cron/bracket/sync-teams";
 import { getTranslations } from "@/lib/i18n/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import type { Match } from "@/types/database";
 
 function matchesRoundPath(groupId: string, roundKey: string) {
   return `/groups/${groupId}/matches/${roundKey}`;
@@ -33,6 +36,39 @@ function revalidateGroupModules(groupId: string, roundKey: string) {
   revalidatePath(`/groups/${groupId}/matches`);
   revalidatePath(matchesRoundPath(groupId, roundKey));
   revalidatePath(`/groups/${groupId}`);
+}
+
+async function propagateKnockoutTeams(matchId: string) {
+  const admin = createAdminClient();
+  if (!admin) {
+    return;
+  }
+
+  const { data: matchRow } = await admin
+    .from("matches")
+    .select("tournament_id")
+    .eq("id", matchId)
+    .maybeSingle();
+
+  if (!matchRow?.tournament_id) {
+    return;
+  }
+
+  const [{ data: tournament }, { data: matches }] = await Promise.all([
+    admin.from("tournaments").select("slug").eq("id", matchRow.tournament_id).maybeSingle(),
+    admin
+      .from("matches")
+      .select(
+        "id, tournament_id, home_team, away_team, kickoff_at, stage, matchday, group_code, sort_order, home_score, away_score, status",
+      )
+      .eq("tournament_id", matchRow.tournament_id),
+  ]);
+
+  if (!tournament?.slug || !matches?.length) {
+    return;
+  }
+
+  await syncKnockoutTeams(admin, tournament.slug, matches as Match[]);
 }
 
 export async function saveMatchResult(formData: FormData) {
@@ -74,6 +110,8 @@ export async function saveMatchResult(formData: FormData) {
   if (error) {
     await redirectToMatchesRound(groupId, roundKey, { error: error.message });
   }
+
+  await propagateKnockoutTeams(matchId);
 
   revalidateGroupModules(groupId, roundKey);
   await redirectToMatchesRound(groupId, roundKey, {

@@ -298,7 +298,7 @@ export const et = {
     cronSyncNow: "Uuenda skoorid kohe",
     cronSyncNowHint: "Käsitsi uuendus ignoreerib intervalli — võid vajutada igal ajal mängu ajal.",
     cronSyncRunning: "Uuendan…",
-    cronSyncDone: "Uuendatud: {live} live, {scores} skoori, {bonus} boonust.",
+    cronSyncDone: "Uuendatud: {live} live, {scores} skoori, {teams} meeskonda, {bonus} boonust.",
     cronSyncFailed: "Cron uuendus ebaõnnestus.",
     adminOnly: "Ainult admin saab cron'i käivitada.",
     cronEnabled: "Cron on sees",

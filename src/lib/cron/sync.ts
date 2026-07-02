@@ -1,3 +1,4 @@
+import { syncKnockoutTeams } from "@/lib/cron/bracket/sync-teams";
 import { syncTournamentBonusResults } from "@/lib/cron/bonus/sync-bonus";
 import { parseCronSettings } from "@/lib/cron/settings";
 import { syncTournamentScores } from "@/lib/cron/scores/sync-scores";
@@ -23,6 +24,7 @@ export type CronSyncResult = {
   matchesInWindow: number;
   matchesUpdated: number;
   scoresUpdated: number;
+  teamsUpdated: number;
   bonusUpdated: number;
   details: string[];
 };
@@ -118,6 +120,7 @@ export async function runCronSync(options?: { force?: boolean }): Promise<CronSy
       matchesInWindow: 0,
       matchesUpdated: 0,
       scoresUpdated: 0,
+      teamsUpdated: 0,
       bonusUpdated: 0,
       details: ["Lisa SUPABASE_SERVICE_ROLE_KEY ja CRON_SECRET keskkonna muutujatesse."],
     };
@@ -137,6 +140,7 @@ export async function runCronSync(options?: { force?: boolean }): Promise<CronSy
       matchesInWindow: 0,
       matchesUpdated: 0,
       scoresUpdated: 0,
+      teamsUpdated: 0,
       bonusUpdated: 0,
       details: [settingsError.message],
     };
@@ -156,6 +160,7 @@ export async function runCronSync(options?: { force?: boolean }): Promise<CronSy
       matchesInWindow: 0,
       matchesUpdated: 0,
       scoresUpdated: 0,
+      teamsUpdated: 0,
       bonusUpdated: 0,
       details: [],
     };
@@ -177,6 +182,7 @@ export async function runCronSync(options?: { force?: boolean }): Promise<CronSy
       matchesInWindow: 0,
       matchesUpdated: 0,
       scoresUpdated: 0,
+      teamsUpdated: 0,
       bonusUpdated: 0,
       details: [groupsError.message],
     };
@@ -219,6 +225,7 @@ export async function runCronSync(options?: { force?: boolean }): Promise<CronSy
   let totalInWindow = 0;
   let totalLiveUpdated = 0;
   let totalScoresUpdated = 0;
+  let totalTeamsUpdated = 0;
   let totalBonusUpdated = 0;
   const details: string[] = [];
 
@@ -236,58 +243,94 @@ export async function runCronSync(options?: { force?: boolean }): Promise<CronSy
     }
 
     const typedMatches = (matches ?? []) as Match[];
+    const tournamentSlug = slugByTournament.get(tournamentId) ?? tournamentId;
     const inWindow = countMatchesInSyncWindow(typedMatches, config.cron, now);
     totalInWindow += inWindow;
 
-    if (!options?.force && !shouldRunCronNow(config.cron, inWindow, now)) {
-      details.push(
-        `Turniir ${tournamentId}: vahele jäetud (${inWindow} mängu aknas, intervall ${config.cron.interval_minutes} min)`,
+    let workingMatches = typedMatches;
+
+    const shouldSyncScores =
+      options?.force ||
+      (shouldRunCronNow(config.cron, inWindow, now) && inWindow > 0);
+
+    if (shouldSyncScores) {
+      const windowMatches = typedMatches.filter((match) =>
+        isMatchInSyncWindow(match, config.cron, now),
       );
-      continue;
-    }
+      const syncResult = await syncTournamentMatches(
+        admin,
+        tournamentSlug,
+        typedMatches,
+        windowMatches,
+        now,
+      );
+      totalLiveUpdated += syncResult.liveUpdated;
+      totalScoresUpdated += syncResult.scoresUpdated;
+      details.push(...syncResult.details);
 
-    if (inWindow === 0) {
+      const { data: refreshedMatches } = await admin
+        .from("matches")
+        .select(
+          "id, tournament_id, home_team, away_team, kickoff_at, stage, matchday, group_code, sort_order, home_score, away_score, status",
+        )
+        .eq("tournament_id", tournamentId);
+
+      if (refreshedMatches) {
+        workingMatches = refreshedMatches as Match[];
+      }
+    } else if (!options?.force && !shouldRunCronNow(config.cron, inWindow, now)) {
+      details.push(
+        `Turniir ${tournamentId}: skoorid vahele jäetud (${inWindow} mängu aknas, intervall ${config.cron.interval_minutes} min)`,
+      );
+    } else if (inWindow === 0) {
       details.push(`Turniir ${tournamentId}: mängu aknas pole ühtegi mängu`);
-      continue;
     }
 
-    const windowMatches = typedMatches.filter((match) =>
-      isMatchInSyncWindow(match, config.cron, now),
-    );
-    const tournamentSlug = slugByTournament.get(tournamentId) ?? tournamentId;
-    const syncResult = await syncTournamentMatches(
+    const bracketResult = await syncKnockoutTeams(
       admin,
       tournamentSlug,
-      typedMatches,
-      windowMatches,
-      now,
+      workingMatches,
     );
-    totalLiveUpdated += syncResult.liveUpdated;
-    totalScoresUpdated += syncResult.scoresUpdated;
-    details.push(...syncResult.details);
+    totalTeamsUpdated += bracketResult.teamsUpdated;
+    details.push(...bracketResult.details);
+
+    if (bracketResult.teamsUpdated > 0) {
+      const { data: refreshedMatches } = await admin
+        .from("matches")
+        .select(
+          "id, tournament_id, home_team, away_team, kickoff_at, stage, matchday, group_code, sort_order, home_score, away_score, status",
+        )
+        .eq("tournament_id", tournamentId);
+
+      if (refreshedMatches) {
+        workingMatches = refreshedMatches as Match[];
+      }
+    }
 
     const bonusResult = await syncTournamentBonusResults(
       admin,
       tournamentId,
-      typedMatches,
+      workingMatches,
     );
     totalBonusUpdated += bonusResult.bonusUpdated;
     details.push(...bonusResult.details);
 
-    for (const groupId of config.groupIds) {
-      const { error: recalcError } = await admin.rpc("recalculate_group_match_points", {
-        p_group_id: groupId,
-      });
+    if (shouldSyncScores || bracketResult.teamsUpdated > 0) {
+      for (const groupId of config.groupIds) {
+        const { error: recalcError } = await admin.rpc("recalculate_group_match_points", {
+          p_group_id: groupId,
+        });
 
-      if (recalcError) {
-        details.push(`Grupp ${groupId}: punktide arvutus — ${recalcError.message}`);
+        if (recalcError) {
+          details.push(`Grupp ${groupId}: punktide arvutus — ${recalcError.message}`);
+        }
       }
-    }
 
-    tournamentsSynced += 1;
+      tournamentsSynced += 1;
 
-    for (const groupId of config.groupIds) {
-      await admin.rpc("touch_group_cron_run", { p_group_id: groupId });
+      for (const groupId of config.groupIds) {
+        await admin.rpc("touch_group_cron_run", { p_group_id: groupId });
+      }
     }
   }
 
@@ -299,6 +342,7 @@ export async function runCronSync(options?: { force?: boolean }): Promise<CronSy
     matchesInWindow: totalInWindow,
     matchesUpdated: totalLiveUpdated,
     scoresUpdated: totalScoresUpdated,
+    teamsUpdated: totalTeamsUpdated,
     bonusUpdated: totalBonusUpdated,
     details,
   };

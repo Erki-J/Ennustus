@@ -301,7 +301,7 @@ export const en = {
     cronSyncNow: "Update scores now",
     cronSyncNowHint: "Manual sync ignores the interval — you can click anytime during a match.",
     cronSyncRunning: "Updating…",
-    cronSyncDone: "Updated: {live} live, {scores} scores, {bonus} bonus answers.",
+    cronSyncDone: "Updated: {live} live, {scores} scores, {teams} teams, {bonus} bonus answers.",
     cronSyncFailed: "Cron update failed.",
     adminOnly: "Only admins can run cron sync.",
     cronEnabled: "Cron enabled",

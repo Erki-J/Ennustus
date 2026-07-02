@@ -568,6 +568,7 @@ export async function triggerCronSyncNow(
   const summary = t("settings.cronSyncDone", {
     live: result.matchesUpdated,
     scores: result.scoresUpdated,
+    teams: result.teamsUpdated,
     bonus: result.bonusUpdated,
   });
 
