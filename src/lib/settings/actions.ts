@@ -552,7 +552,7 @@ export async function triggerCronSyncNow(
     return { error: t("settings.adminOnly") };
   }
 
-  const result = await runCronSync();
+  const result = await runCronSync({ force: true });
 
   if (!result.ok) {
     return { error: result.reason ?? t("settings.cronSyncFailed") };

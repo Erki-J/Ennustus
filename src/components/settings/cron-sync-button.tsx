@@ -23,6 +23,7 @@ export function SettingsCronSyncButton({ groupId }: { groupId: string }) {
       >
         {pending ? t("settings.cronSyncRunning") : t("settings.cronSyncNow")}
       </button>
+      <p className="mt-1 text-xs text-zinc-500">{t("settings.cronSyncNowHint")}</p>
       {state.error && <p className="mt-2 text-sm text-red-600">{state.error}</p>}
       {state.success && <p className="mt-2 text-sm text-emerald-700">{state.success}</p>}
     </form>

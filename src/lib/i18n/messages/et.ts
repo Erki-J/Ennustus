@@ -296,6 +296,7 @@ export const et = {
     bonusSyncHint:
       "Boonused täituvad automaatselt: alagrupi võitja pärast grupi viimast mängu, turniiri võitja ja enim väravaid löönud meeskond pärast finaali.",
     cronSyncNow: "Uuenda skoorid kohe",
+    cronSyncNowHint: "Käsitsi uuendus ignoreerib intervalli — võid vajutada igal ajal mängu ajal.",
     cronSyncRunning: "Uuendan…",
     cronSyncDone: "Uuendatud: {live} live, {scores} skoori, {bonus} boonust.",
     cronSyncFailed: "Cron uuendus ebaõnnestus.",

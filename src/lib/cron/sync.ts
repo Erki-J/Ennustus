@@ -105,7 +105,7 @@ async function syncTournamentMatches(
   };
 }
 
-export async function runCronSync(): Promise<CronSyncResult> {
+export async function runCronSync(options?: { force?: boolean }): Promise<CronSyncResult> {
   const admin = createAdminClient();
 
   if (!admin) {
@@ -239,10 +239,15 @@ export async function runCronSync(): Promise<CronSyncResult> {
     const inWindow = countMatchesInSyncWindow(typedMatches, config.cron, now);
     totalInWindow += inWindow;
 
-    if (!shouldRunCronNow(config.cron, inWindow, now)) {
+    if (!options?.force && !shouldRunCronNow(config.cron, inWindow, now)) {
       details.push(
         `Turniir ${tournamentId}: vahele jäetud (${inWindow} mängu aknas, intervall ${config.cron.interval_minutes} min)`,
       );
+      continue;
+    }
+
+    if (inWindow === 0) {
+      details.push(`Turniir ${tournamentId}: mängu aknas pole ühtegi mängu`);
       continue;
     }
 

@@ -299,6 +299,7 @@ export const en = {
     bonusSyncHint:
       "Bonus answers fill automatically: group winners after the last group match, tournament winner and top-scoring team after the final.",
     cronSyncNow: "Update scores now",
+    cronSyncNowHint: "Manual sync ignores the interval — you can click anytime during a match.",
     cronSyncRunning: "Updating…",
     cronSyncDone: "Updated: {live} live, {scores} scores, {bonus} bonus answers.",
     cronSyncFailed: "Cron update failed.",
