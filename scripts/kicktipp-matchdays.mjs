@@ -2,6 +2,7 @@
  * Kicktipp kasutab alagrupis 10 mängupäeva (mitte 17 openfootball päeva).
  * Iga mängupäev on mitme kalendripäeva mängude kogum.
  *
+ * MM 2026 kaardistus (see fail):
  * MD1  → OF 1–3   (8 mängu)
  * MD2  → OF 4–5   (8)
  * MD3  → OF 6–7   (8)
@@ -12,6 +13,8 @@
  * MD8  → OF 15    (6)
  * MD9  → OF 16    (6)
  * MD10 → OF 17    (6)
+ *
+ * EM 2024 (6 gruppi): vt scripts/ec-2024-matchdays.mjs — teine loogika (7 MD-d).
  */
 export function openfootballMatchday(round) {
   const match = round.match(/Matchday\s+(\d+)/i);
