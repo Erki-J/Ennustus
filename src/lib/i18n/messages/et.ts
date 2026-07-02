@@ -33,6 +33,7 @@ export const et = {
     yourPrediction: "Sinu ennustus",
     on: "Sees",
     off: "Väljas",
+    live: "Live",
     tournament: "Turniir",
     tryAgain: "Proovi uuesti",
     error: "Viga",
@@ -260,12 +261,18 @@ export const et = {
     windowActive: "Mängu aken on aktiivne — cron võib mänge live-ks märkida.",
     windowInactive: "Praegu pole ühtegi mängu päringu aknas.",
     vercelSetup: "Vercel seadistus",
-    vercelEnvHint: "Lisa keskkonna muutujad: CRON_SECRET, SUPABASE_SERVICE_ROLE_KEY.",
+    vercelEnvHint:
+      "Lisa keskkonna muutujad: CRON_SECRET, SUPABASE_SERVICE_ROLE_KEY, API_FOOTBALL_KEY.",
     vercelHobbyHint:
       "Vercel Hobby lubab cron'i kord päevas. Päringu intervall siin kehtib cron endpointi käivitamisel.",
     vercelIntervalHint: "Siin seatud intervall kehtib iga cron käivituse kohta.",
     scoreImportHint:
-      "Skoorid tulevad openfootball/worldcup.json allikast. Valikuline override: OPENFOOTBALL_JSON_URL.",
+      "Live skoor: API_FOOTBALL_KEY (soovitatav, MM 2026). Alternatiiv: FOOTBALL_DATA_API_KEY. Lõplik tulemus: openfootball JSON.",
+    cronSyncNow: "Uuenda skoorid kohe",
+    cronSyncRunning: "Uuendan…",
+    cronSyncDone: "Uuendatud: {live} live, {scores} skoori.",
+    cronSyncFailed: "Cron uuendus ebaõnnestus.",
+    adminOnly: "Ainult admin saab cron'i käivitada.",
     cronEnabled: "Cron on sees",
     pollStart: "Päringu algus",
     kickoff: "Mängu algus (kickoff)",

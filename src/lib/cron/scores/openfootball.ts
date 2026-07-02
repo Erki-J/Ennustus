@@ -1,4 +1,5 @@
 import { englishTeamToEstonian } from "@/lib/cron/scores/team-names";
+import type { ExternalMatchScore } from "@/lib/cron/scores/external-score";
 
 export type OpenFootballMatch = {
   homeTeamEn: string;
@@ -6,9 +7,7 @@ export type OpenFootballMatch = {
   homeTeamEt: string;
   awayTeamEt: string;
   kickoffAt: string;
-  homeScore: number | null;
-  awayScore: number | null;
-  finished: boolean;
+  score: ExternalMatchScore | null;
 };
 
 type RawOpenFootballMatch = {
@@ -19,6 +18,8 @@ type RawOpenFootballMatch = {
   score?: {
     ft?: [number, number];
     ht?: [number, number];
+    et?: [number, number];
+    p?: [number, number];
   };
 };
 
@@ -60,6 +61,44 @@ export function parseKickoffUtc(date: string, timeStr: string): string {
   return base.toISOString();
 }
 
+function parseOpenFootballScore(
+  raw: RawOpenFootballMatch,
+): ExternalMatchScore | null {
+  const score = raw.score;
+  if (!score) {
+    return null;
+  }
+
+  if (score.ft) {
+    return {
+      homeScore: score.ft[0],
+      awayScore: score.ft[1],
+      status: "finished",
+      source: "openfootball",
+    };
+  }
+
+  if (score.et) {
+    return {
+      homeScore: score.et[0],
+      awayScore: score.et[1],
+      status: "live",
+      source: "openfootball",
+    };
+  }
+
+  if (score.ht) {
+    return {
+      homeScore: score.ht[0],
+      awayScore: score.ht[1],
+      status: "live",
+      source: "openfootball",
+    };
+  }
+
+  return null;
+}
+
 function parseRawMatch(raw: RawOpenFootballMatch): OpenFootballMatch | null {
   if (!raw.date || !raw.time || !raw.team1 || !raw.team2) {
     return null;
@@ -67,9 +106,6 @@ function parseRawMatch(raw: RawOpenFootballMatch): OpenFootballMatch | null {
 
   const homeTeamEn = raw.team1;
   const awayTeamEn = raw.team2;
-  const finished = Boolean(raw.score?.ft);
-  const homeScore = finished ? raw.score!.ft![0] : null;
-  const awayScore = finished ? raw.score!.ft![1] : null;
 
   return {
     homeTeamEn,
@@ -77,9 +113,7 @@ function parseRawMatch(raw: RawOpenFootballMatch): OpenFootballMatch | null {
     homeTeamEt: englishTeamToEstonian(homeTeamEn),
     awayTeamEt: englishTeamToEstonian(awayTeamEn),
     kickoffAt: parseKickoffUtc(raw.date, raw.time),
-    homeScore,
-    awayScore,
-    finished,
+    score: parseOpenFootballScore(raw),
   };
 }
 
@@ -108,15 +142,15 @@ export async function fetchOpenFootballMatches(
     .filter((match): match is OpenFootballMatch => match !== null);
 }
 
-export function findOpenFootballMatch(
+export function findOpenFootballScore(
   homeTeam: string,
   awayTeam: string,
   kickoffAt: string,
   externalMatches: OpenFootballMatch[],
-): OpenFootballMatch | null {
+): ExternalMatchScore | null {
   const kickoffMs = new Date(kickoffAt).getTime();
 
-  return (
+  const match =
     externalMatches.find((candidate) => {
       if (candidate.homeTeamEt !== homeTeam || candidate.awayTeamEt !== awayTeam) {
         return false;
@@ -124,6 +158,7 @@ export function findOpenFootballMatch(
 
       const candidateMs = new Date(candidate.kickoffAt).getTime();
       return Math.abs(candidateMs - kickoffMs) <= 60_000;
-    }) ?? null
-  );
+    }) ?? null;
+
+  return match?.score ?? null;
 }

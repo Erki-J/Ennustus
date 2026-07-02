@@ -174,7 +174,9 @@ export default async function OverviewRoundPage({ params }: OverviewRoundPagePro
                 >
                   {match.home_score !== null && match.away_score !== null
                     ? formatMatchScore(match.home_score, match.away_score)
-                    : t("common.dash")}
+                    : match.status === "live"
+                      ? t("common.live")
+                      : t("common.dash")}
                 </td>
               </tr>
             ))}

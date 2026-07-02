@@ -33,6 +33,7 @@ export const en = {
     yourPrediction: "Your prediction",
     on: "On",
     off: "Off",
+    live: "Live",
     tournament: "Tournament",
     tryAgain: "Try again",
     error: "Error",
@@ -263,12 +264,18 @@ export const en = {
     windowActive: "Match window is active — cron may mark matches as live.",
     windowInactive: "No matches in the polling window right now.",
     vercelSetup: "Vercel setup",
-    vercelEnvHint: "Add environment variables: CRON_SECRET, SUPABASE_SERVICE_ROLE_KEY.",
+    vercelEnvHint:
+      "Add environment variables: CRON_SECRET, SUPABASE_SERVICE_ROLE_KEY, API_FOOTBALL_KEY.",
     vercelHobbyHint:
       "Vercel Hobby allows cron once per day. The interval here applies when the cron endpoint runs.",
     vercelIntervalHint: "The interval set here applies per cron run.",
     scoreImportHint:
-      "Scores are imported from openfootball/worldcup.json. Optional override: OPENFOOTBALL_JSON_URL.",
+      "Live scores: API_FOOTBALL_KEY (recommended, WC 2026). Alternative: FOOTBALL_DATA_API_KEY. Final results: openfootball JSON.",
+    cronSyncNow: "Update scores now",
+    cronSyncRunning: "Updating…",
+    cronSyncDone: "Updated: {live} live, {scores} scores.",
+    cronSyncFailed: "Cron update failed.",
+    adminOnly: "Only admins can run cron sync.",
     cronEnabled: "Cron enabled",
     pollStart: "Poll start",
     kickoff: "Kickoff",

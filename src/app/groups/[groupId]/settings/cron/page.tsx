@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { SettingsCronForm } from "@/components/settings/cron-form";
+import { SettingsCronSyncButton } from "@/components/settings/cron-sync-button";
 import { getGroupCronPageData } from "@/lib/settings/actions";
 import { formatDateTime } from "@/lib/i18n/format";
 import { getI18n } from "@/lib/i18n/server";
@@ -59,6 +60,7 @@ export default async function SettingsCronPage({ params }: SettingsCronPageProps
 
       <div className="mt-4">
         <SettingsCronForm groupId={groupId} cron={cron} />
+        <SettingsCronSyncButton groupId={groupId} />
       </div>
 
       <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600">

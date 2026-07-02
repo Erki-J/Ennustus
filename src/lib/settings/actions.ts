@@ -14,7 +14,7 @@ import {
 } from "@/lib/matchdays/queries";
 import { getGroupContext } from "@/lib/groups/context";
 import { parseCronSettings } from "@/lib/cron/settings";
-import { computeCronStatus } from "@/lib/cron/sync";
+import { computeCronStatus, runCronSync } from "@/lib/cron/sync";
 import type { Match } from "@/types/database";
 import { ADMIN_PREDICTIONS_BONUS_SECTION } from "@/lib/settings/predictions";
 
@@ -533,5 +533,42 @@ export async function getGroupCronPageData(groupId: string) {
     context,
     cron,
     status,
+  };
+}
+
+export async function triggerCronSyncNow(
+  _prevState: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const t = await getTranslations();
+  const groupId = String(formData.get("group_id") ?? "");
+
+  if (!groupId) {
+    return { error: t("common.error") };
+  }
+
+  const context = await getGroupContext(groupId);
+  if (!context || context.myRole !== "admin") {
+    return { error: t("settings.adminOnly") };
+  }
+
+  const result = await runCronSync();
+
+  if (!result.ok) {
+    return { error: result.reason ?? t("settings.cronSyncFailed") };
+  }
+
+  revalidatePath(`/groups/${groupId}/settings/cron`);
+  revalidatePath(`/groups/${groupId}/overview`, "layout");
+  revalidatePath(`/groups/${groupId}/matches`, "layout");
+
+  const detail = result.details.at(-1);
+  const summary = t("settings.cronSyncDone", {
+    live: result.matchesUpdated,
+    scores: result.scoresUpdated,
+  });
+
+  return {
+    success: detail ? `${summary} ${detail}` : summary,
   };
 }
