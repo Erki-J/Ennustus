@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { logout } from "@/lib/auth/actions";
+import { isPlatformAdmin } from "@/lib/admin/roles";
 import { useTranslations } from "@/lib/i18n/provider";
 import type { Profile } from "@/types/database";
 
@@ -22,14 +24,21 @@ export function AppHeader({ profile }: AppHeaderProps) {
             })}
           </p>
         </div>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="btn-secondary px-3 py-1.5 text-sm"
-          >
-            {t("header.logout")}
-          </button>
-        </form>
+        <div className="flex items-center gap-2">
+          {isPlatformAdmin(profile) && (
+            <Link href="/admin" className="btn-secondary px-3 py-1.5 text-sm">
+              {t("platformAdmin.nav")}
+            </Link>
+          )}
+          <form action={logout}>
+            <button
+              type="submit"
+              className="btn-secondary px-3 py-1.5 text-sm"
+            >
+              {t("header.logout")}
+            </button>
+          </form>
+        </div>
       </div>
     </header>
   );
