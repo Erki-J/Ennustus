@@ -72,17 +72,53 @@ function shouldUpdateTeam(
   return isTeamPlaceholder(currentName);
 }
 
+const KNOCKOUT_STAGE_RANGES: Array<{ stage: string; start: number; end: number }> = [
+  { stage: "round_32", start: 73, end: 88 },
+  { stage: "round_16", start: 89, end: 96 },
+  { stage: "quarter", start: 97, end: 100 },
+  { stage: "semi", start: 101, end: 102 },
+  { stage: "third", start: 103, end: 103 },
+  { stage: "final", start: 104, end: 104 },
+];
+
+export function indexKnockoutMatchesByBracketNum(
+  matches: Match[],
+): Map<number, Match> {
+  const bySortOrder = new Map<number, Match>();
+
+  for (const match of matches) {
+    if (match.sort_order >= 73) {
+      bySortOrder.set(match.sort_order, match);
+    }
+  }
+
+  if (bySortOrder.has(73)) {
+    return bySortOrder;
+  }
+
+  const byStage = new Map<number, Match>();
+
+  for (const { stage, start, end } of KNOCKOUT_STAGE_RANGES) {
+    const stageMatches = matches
+      .filter((match) => match.stage === stage)
+      .sort((a, b) => a.kickoff_at.localeCompare(b.kickoff_at));
+
+    stageMatches.forEach((match, index) => {
+      const matchNum = start + index;
+      if (matchNum <= end) {
+        byStage.set(matchNum, match);
+      }
+    });
+  }
+
+  return byStage;
+}
+
 export function buildKnockoutUpdates(
   matches: Match[],
   bracket = WC2026_KNOCKOUT_BRACKET,
 ): Array<{ matchId: string; home_team?: string; away_team?: string; label: string }> {
-  const matchesByNum = new Map<number, Match>();
-
-  for (const match of matches) {
-    if (match.sort_order >= bracket[0]?.matchNum) {
-      matchesByNum.set(match.sort_order, match);
-    }
-  }
+  const matchesByNum = indexKnockoutMatchesByBracketNum(matches);
 
   const updates: Array<{
     matchId: string;

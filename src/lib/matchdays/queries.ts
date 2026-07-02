@@ -1,11 +1,16 @@
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import {
+  buildKnockoutUpdates,
+  syncKnockoutTeams,
+} from "@/lib/cron/bracket/sync-teams";
 import {
   matchdayLabel,
   matchdayParam,
   parseMatchdayParam,
 } from "@/lib/matchdays/labels";
 import { compareMatchdayRounds } from "@/lib/matchdays/sort";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import type { AppLocale } from "@/lib/settings/locale";
 import type { Match } from "@/types/database";
 
@@ -63,6 +68,35 @@ export async function getTournamentMatchdays(
   return [...rounds.values()].sort(compareMatchdayRounds);
 }
 
+async function ensureKnockoutTeamsSynced(tournamentId: string, slug: string | null) {
+  if (slug !== "wc-2026") {
+    return;
+  }
+
+  const admin = createAdminClient();
+  if (!admin) {
+    return;
+  }
+
+  const { data: matches } = await admin
+    .from("matches")
+    .select(MATCH_SELECT)
+    .eq("tournament_id", tournamentId);
+
+  if (!matches?.length) {
+    return;
+  }
+
+  const typedMatches = matches as Match[];
+  const pending = buildKnockoutUpdates(typedMatches);
+
+  if (pending.length === 0) {
+    return;
+  }
+
+  await syncKnockoutTeams(admin, slug, typedMatches);
+}
+
 export function resolveMatchdayRound(
   rounds: MatchdayRound[],
   roundKey?: string,
@@ -113,13 +147,22 @@ const getGroupMatchdaysImpl = cache(
 
   const { data: group } = await supabase
     .from("prediction_groups")
-    .select("tournament_id")
+    .select("tournament_id, tournament:tournaments(slug)")
     .eq("id", groupId)
     .single();
 
   if (!group) {
     return { rounds: [] as MatchdayRound[], tournamentId: null as string | null };
   }
+
+  const tournamentSlug =
+    group.tournament &&
+    typeof group.tournament === "object" &&
+    "slug" in group.tournament
+      ? String(group.tournament.slug)
+      : null;
+
+  await ensureKnockoutTeamsSynced(group.tournament_id, tournamentSlug);
 
   const rounds = await getTournamentMatchdays(group.tournament_id, locale);
 
