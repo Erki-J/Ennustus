@@ -57,6 +57,27 @@ function getApiFootballConfig(tournamentSlug: string) {
   return TOURNAMENT_CONFIG[tournamentSlug] ?? null;
 }
 
+function formatApiFootballError(status: number, errors: unknown): string {
+  const errorsText =
+    errors && typeof errors === "object"
+      ? JSON.stringify(errors)
+      : String(errors ?? "");
+
+  if (status === 403 || /suspend|disabled|blocked|banned/i.test(errorsText)) {
+    return "API-Football: konto peatatud või võti kehtetu. Taasta konto api-sports.io-s või eemalda API_FOOTBALL_KEY Vercelist.";
+  }
+
+  if (status === 429 || /rate limit|requests/i.test(errorsText)) {
+    return "API-Football: päringute limiit täis (Free plaan: 100/päev).";
+  }
+
+  if (errorsText) {
+    return `API-Football: ${errorsText}`;
+  }
+
+  return `API-Football (${status})`;
+}
+
 function readFixtureScore(
   fixture: ApiFootballFixture,
 ): { home: number; away: number } | null {
@@ -107,19 +128,6 @@ function parseApiFootballScore(
   return null;
 }
 
-function fixtureKey(fixture: ApiFootballFixture): string {
-  return `${fixture.fixture.date}:${fixture.teams.home.name}:${fixture.teams.away.name}`;
-}
-
-function mergeFixtures(
-  target: Map<string, ApiFootballFixture>,
-  fixtures: ApiFootballFixture[],
-) {
-  for (const fixture of fixtures) {
-    target.set(fixtureKey(fixture), fixture);
-  }
-}
-
 async function fetchFixtures(
   apiKey: string,
   params: Record<string, string>,
@@ -136,14 +144,14 @@ async function fetchFixtures(
     },
   });
 
-  if (!response.ok) {
-    throw new Error(`API-Football (${response.status})`);
-  }
-
   const payload = (await response.json()) as ApiFootballResponse;
 
+  if (!response.ok) {
+    throw new Error(formatApiFootballError(response.status, payload.errors));
+  }
+
   if (payload.errors && Object.keys(payload.errors as object).length > 0) {
-    throw new Error(`API-Football: ${JSON.stringify(payload.errors)}`);
+    throw new Error(formatApiFootballError(response.status, payload.errors));
   }
 
   return payload.response ?? [];
@@ -173,56 +181,27 @@ export async function fetchApiFootballFixtures(
   }
 
   const uniqueDates = [...new Set(kickoffDates)].sort();
-  const byFixtureDate = new Map<string, ApiFootballFixture>();
+  const fromDate = uniqueDates[0];
+  const toDate = uniqueDates[uniqueDates.length - 1];
 
   try {
-    const rangeFixtures = await fetchFixtures(apiKey, {
+    const fixtures = await fetchFixtures(apiKey, {
       league: String(config.league),
       season: String(config.season),
-      from: uniqueDates[0],
-      to: uniqueDates[uniqueDates.length - 1],
+      from: fromDate,
+      to: toDate,
     });
-    mergeFixtures(byFixtureDate, rangeFixtures);
+
     notes.push(
-      `API-Football: ${rangeFixtures.length} mängu (${uniqueDates[0]}–${uniqueDates.at(-1)})`,
+      `API-Football: 1 päring, ${fixtures.length} mängu (${fromDate}${fromDate === toDate ? "" : `–${toDate}`})`,
     );
+
+    return { fixtures, notes };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Tundmatu viga";
     notes.push(message);
+    return { fixtures: [], notes };
   }
-
-  for (const date of uniqueDates) {
-    try {
-      const dateFixtures = await fetchFixtures(apiKey, {
-        league: String(config.league),
-        season: String(config.season),
-        date,
-      });
-      mergeFixtures(byFixtureDate, dateFixtures);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Tundmatu viga";
-      notes.push(`${date}: ${message}`);
-    }
-  }
-
-  try {
-    const liveFixtures = await fetchFixtures(apiKey, {
-      live: "all",
-    });
-    const tournamentLive = liveFixtures.filter(
-      (fixture) => fixture.league?.id === config.league,
-    );
-    mergeFixtures(byFixtureDate, tournamentLive);
-    notes.push(`API-Football live: ${tournamentLive.length} mängu`);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Tundmatu viga";
-    notes.push(`Live: ${message}`);
-  }
-
-  return {
-    fixtures: [...byFixtureDate.values()],
-    notes,
-  };
 }
 
 export function findApiFootballScore(
