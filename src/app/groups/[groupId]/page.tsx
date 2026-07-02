@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { InviteForm } from "@/components/invite-form";
 import { RemoveMemberButton } from "@/components/remove-member-button";
+import { UpdateGroupNameForm } from "@/components/update-group-name-form";
 import { UpdateNicknameForm } from "@/components/update-nickname-form";
 import { getProfile } from "@/lib/auth/get-profile";
 import { getGroupById } from "@/lib/groups/queries";
@@ -27,6 +28,12 @@ export default async function GroupPage({ params }: GroupPageProps) {
 
   return (
     <>
+      {group.myRole === "admin" && (
+        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <UpdateGroupNameForm groupId={group.id} name={group.name} />
+        </section>
+      )}
+
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <UpdateNicknameForm groupId={group.id} nickname={group.myNickname} />
       </section>

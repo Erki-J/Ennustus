@@ -251,3 +251,34 @@ export async function updateMyNickname(
   revalidatePath("/dashboard");
   return { success: t("group.nicknameUpdated") };
 }
+
+export async function updateGroupName(
+  _prevState: GroupActionState,
+  formData: FormData,
+): Promise<GroupActionState> {
+  const t = await getTranslations();
+  const groupId = String(formData.get("group_id") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!groupId || !name) {
+    return { error: t("group.errorGroupNameRequired") };
+  }
+
+  if (name.length < 2) {
+    return { error: t("group.errorGroupNameMin") };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_group_name", {
+    p_group_id: groupId,
+    p_name: name,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath("/dashboard");
+  return { success: t("group.groupNameUpdated") };
+}
