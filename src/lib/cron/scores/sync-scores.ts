@@ -117,10 +117,12 @@ export async function syncTournamentScores(
   let apiFootballFixtures: ApiFootballFixture[] = [];
   if (hasApiFootball) {
     try {
-      apiFootballFixtures = await fetchApiFootballFixtures(
+      const apiFootballResult = await fetchApiFootballFixtures(
         tournamentSlug,
         kickoffDates,
       );
+      apiFootballFixtures = apiFootballResult.fixtures;
+      details.push(...apiFootballResult.notes);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Tundmatu viga";
       details.push(message);
@@ -182,9 +184,15 @@ export async function syncTournamentScores(
 
   if (scoresUpdated === 0 && eligibleMatches.length > 0) {
     if (hasApiFootball || hasFootballData) {
-      details.push(
-        "Live skoori allikast veel tulemust ei leitud (mäng võib alles käia).",
-      );
+      if (hasApiFootball && apiFootballFixtures.length === 0) {
+        details.push(
+          "API-Football ei tagastanud ühtegi MM 2026 mängu. Kontrolli dashboard.api-football.com päringute arvu (peaks kasvama) ja plaani ligipääsu.",
+        );
+      } else {
+        details.push(
+          "Live skoori allikast veel tulemust ei leitud (mäng võib alles käia või meeskondade nimi ei klapi).",
+        );
+      }
     } else {
       details.push(
         "Live skoori jaoks lisa Vercelisse API_FOOTBALL_KEY või FOOTBALL_DATA_API_KEY.",

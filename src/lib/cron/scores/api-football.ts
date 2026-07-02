@@ -8,9 +8,16 @@ export type ApiFootballFixture = {
       short: string;
     };
   };
+  league?: {
+    id: number;
+  };
   goals: {
     home: number | null;
     away: number | null;
+  };
+  score?: {
+    halftime?: { home: number | null; away: number | null };
+    fulltime?: { home: number | null; away: number | null };
   };
   teams: {
     home: { name: string };
@@ -21,6 +28,11 @@ export type ApiFootballFixture = {
 type ApiFootballResponse = {
   errors?: unknown;
   response?: ApiFootballFixture[];
+};
+
+export type ApiFootballFetchResult = {
+  fixtures: ApiFootballFixture[];
+  notes: string[];
 };
 
 const TOURNAMENT_CONFIG: Record<string, { league: number; season: number }> = {
@@ -45,21 +57,39 @@ function getApiFootballConfig(tournamentSlug: string) {
   return TOURNAMENT_CONFIG[tournamentSlug] ?? null;
 }
 
+function readFixtureScore(
+  fixture: ApiFootballFixture,
+): { home: number; away: number } | null {
+  const home =
+    fixture.goals.home ??
+    fixture.score?.fulltime?.home ??
+    fixture.score?.halftime?.home;
+  const away =
+    fixture.goals.away ??
+    fixture.score?.fulltime?.away ??
+    fixture.score?.halftime?.away;
+
+  if (home == null || away == null) {
+    return null;
+  }
+
+  return { home, away };
+}
+
 function parseApiFootballScore(
   fixture: ApiFootballFixture,
 ): ExternalMatchScore | null {
   const statusShort = fixture.fixture.status.short;
-  const homeScore = fixture.goals.home;
-  const awayScore = fixture.goals.away;
-
-  if (homeScore == null || awayScore == null) {
-    return null;
-  }
+  const parsed = readFixtureScore(fixture);
 
   if (FINISHED_STATUSES.has(statusShort)) {
+    if (!parsed) {
+      return null;
+    }
+
     return {
-      homeScore,
-      awayScore,
+      homeScore: parsed.home,
+      awayScore: parsed.away,
       status: "finished",
       source: "api-football",
     };
@@ -67,14 +97,27 @@ function parseApiFootballScore(
 
   if (LIVE_STATUSES.has(statusShort)) {
     return {
-      homeScore,
-      awayScore,
+      homeScore: parsed?.home ?? 0,
+      awayScore: parsed?.away ?? 0,
       status: "live",
       source: "api-football",
     };
   }
 
   return null;
+}
+
+function fixtureKey(fixture: ApiFootballFixture): string {
+  return `${fixture.fixture.date}:${fixture.teams.home.name}:${fixture.teams.away.name}`;
+}
+
+function mergeFixtures(
+  target: Map<string, ApiFootballFixture>,
+  fixtures: ApiFootballFixture[],
+) {
+  for (const fixture of fixtures) {
+    target.set(fixtureKey(fixture), fixture);
+  }
 }
 
 async function fetchFixtures(
@@ -106,35 +149,80 @@ async function fetchFixtures(
   return payload.response ?? [];
 }
 
+function kickoffMatchesFixture(kickoffAt: string, fixtureDate: string): boolean {
+  const kickoffMs = new Date(kickoffAt).getTime();
+  const fixtureMs = new Date(fixtureDate).getTime();
+
+  if (Math.abs(fixtureMs - kickoffMs) <= 3 * 60 * 60 * 1000) {
+    return true;
+  }
+
+  return kickoffAt.slice(0, 10) === fixtureDate.slice(0, 10);
+}
+
 export async function fetchApiFootballFixtures(
   tournamentSlug: string,
   kickoffDates: string[],
-): Promise<ApiFootballFixture[]> {
+): Promise<ApiFootballFetchResult> {
   const apiKey = process.env.API_FOOTBALL_KEY;
   const config = getApiFootballConfig(tournamentSlug);
+  const notes: string[] = [];
 
   if (!apiKey || !config || kickoffDates.length === 0) {
-    return [];
+    return { fixtures: [], notes };
   }
 
   const uniqueDates = [...new Set(kickoffDates)].sort();
-  const fixtures = await fetchFixtures(apiKey, {
-    league: String(config.league),
-    season: String(config.season),
-    from: uniqueDates[0],
-    to: uniqueDates[uniqueDates.length - 1],
-  });
-
-  const liveFixtures = await fetchFixtures(apiKey, {
-    live: String(config.league),
-  });
-
   const byFixtureDate = new Map<string, ApiFootballFixture>();
-  for (const fixture of [...fixtures, ...liveFixtures]) {
-    byFixtureDate.set(`${fixture.fixture.date}:${fixture.teams.home.name}:${fixture.teams.away.name}`, fixture);
+
+  try {
+    const rangeFixtures = await fetchFixtures(apiKey, {
+      league: String(config.league),
+      season: String(config.season),
+      from: uniqueDates[0],
+      to: uniqueDates[uniqueDates.length - 1],
+    });
+    mergeFixtures(byFixtureDate, rangeFixtures);
+    notes.push(
+      `API-Football: ${rangeFixtures.length} mängu (${uniqueDates[0]}–${uniqueDates.at(-1)})`,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Tundmatu viga";
+    notes.push(message);
   }
 
-  return [...byFixtureDate.values()];
+  for (const date of uniqueDates) {
+    try {
+      const dateFixtures = await fetchFixtures(apiKey, {
+        league: String(config.league),
+        season: String(config.season),
+        date,
+      });
+      mergeFixtures(byFixtureDate, dateFixtures);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Tundmatu viga";
+      notes.push(`${date}: ${message}`);
+    }
+  }
+
+  try {
+    const liveFixtures = await fetchFixtures(apiKey, {
+      live: "all",
+    });
+    const tournamentLive = liveFixtures.filter(
+      (fixture) => fixture.league?.id === config.league,
+    );
+    mergeFixtures(byFixtureDate, tournamentLive);
+    notes.push(`API-Football live: ${tournamentLive.length} mängu`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Tundmatu viga";
+    notes.push(`Live: ${message}`);
+  }
+
+  return {
+    fixtures: [...byFixtureDate.values()],
+    notes,
+  };
 }
 
 export function findApiFootballScore(
@@ -143,8 +231,6 @@ export function findApiFootballScore(
   kickoffAt: string,
   fixtures: ApiFootballFixture[],
 ): ExternalMatchScore | null {
-  const kickoffMs = new Date(kickoffAt).getTime();
-
   for (const fixture of fixtures) {
     const homeName = fixture.teams.home.name;
     const awayName = fixture.teams.away.name;
@@ -153,8 +239,7 @@ export function findApiFootballScore(
       continue;
     }
 
-    const fixtureMs = new Date(fixture.fixture.date).getTime();
-    if (Math.abs(fixtureMs - kickoffMs) > 2 * 60 * 60 * 1000) {
+    if (!kickoffMatchesFixture(kickoffAt, fixture.fixture.date)) {
       continue;
     }
 
