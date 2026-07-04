@@ -1,4 +1,5 @@
 import { matchesTeamName } from "@/lib/cron/scores/team-names";
+import { combineKnockoutScore } from "@/lib/scoring/knockout-score";
 import type { ExternalMatchScore } from "@/lib/cron/scores/external-score";
 
 type FootballDataTeam = {
@@ -14,6 +15,8 @@ export type FootballDataMatch = {
   score?: {
     fullTime?: { home?: number | null; away?: number | null };
     halfTime?: { home?: number | null; away?: number | null };
+    extraTime?: { home?: number | null; away?: number | null };
+    penalties?: { home?: number | null; away?: number | null };
   };
 };
 
@@ -24,19 +27,50 @@ type FootballDataResponse = {
 const LIVE_STATUSES = new Set(["IN_PLAY", "PAUSED", "LIVE"]);
 const FINISHED_STATUSES = new Set(["FINISHED", "AWARDED"]);
 
+function readKicktippFootballDataScore(
+  match: FootballDataMatch,
+): { home: number; away: number } | null {
+  const fullTime = match.score?.fullTime;
+  const extraTime = match.score?.extraTime;
+  const penalties = match.score?.penalties;
+
+  let baseHome: number | null = null;
+  let baseAway: number | null = null;
+
+  if (extraTime?.home != null && extraTime?.away != null) {
+    baseHome = extraTime.home;
+    baseAway = extraTime.away;
+  } else if (fullTime?.home != null && fullTime?.away != null) {
+    baseHome = fullTime.home;
+    baseAway = fullTime.away;
+  } else {
+    return null;
+  }
+
+  if (penalties?.home != null && penalties?.away != null) {
+    return combineKnockoutScore(
+      { home: baseHome, away: baseAway },
+      { home: penalties.home, away: penalties.away },
+    );
+  }
+
+  return { home: baseHome, away: baseAway };
+}
+
 function parseFootballDataScore(match: FootballDataMatch): ExternalMatchScore | null {
   const status = match.status ?? "";
   const fullTime = match.score?.fullTime;
   const halfTime = match.score?.halfTime;
 
   if (FINISHED_STATUSES.has(status)) {
-    if (fullTime?.home == null || fullTime?.away == null) {
+    const parsed = readKicktippFootballDataScore(match);
+    if (!parsed) {
       return null;
     }
 
     return {
-      homeScore: fullTime.home,
-      awayScore: fullTime.away,
+      homeScore: parsed.home,
+      awayScore: parsed.away,
       status: "finished",
       source: "football-data",
     };

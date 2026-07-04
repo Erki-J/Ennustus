@@ -320,6 +320,8 @@ export const et = {
     enterResults: "Sisesta tegelik skoor. Punktid arvutatakse automaatselt.",
     noMatchesRound: "Sellel mängupäevadel mänge pole.",
     saveResult: "Salvesta tulemus",
+    knockoutScoreHint:
+      "Väljalangemismäng: sisesta lisaaja skoor + penaltid (Kicktippi stiil, nt 1:1 + 3:4 pen → 4:5).",
     loadError: "Mängude tulemused ei laadinud",
     serverError: "Serveri viga. Proovi lehte uuesti laadida.",
     errorResultRequired: "Palun sisesta tulemus.",

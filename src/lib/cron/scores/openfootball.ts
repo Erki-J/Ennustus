@@ -1,3 +1,4 @@
+import { combineKnockoutScore } from "@/lib/scoring/knockout-score";
 import { englishTeamToEstonian } from "@/lib/cron/scores/team-names";
 import type { ExternalMatchScore } from "@/lib/cron/scores/external-score";
 
@@ -67,6 +68,27 @@ function parseOpenFootballScore(
   const score = raw.score;
   if (!score) {
     return null;
+  }
+
+  const afterExtraTime = score.et ?? score.ft;
+  if (
+    afterExtraTime &&
+    score.p &&
+    score.p.length === 2 &&
+    score.p[0] != null &&
+    score.p[1] != null
+  ) {
+    const combined = combineKnockoutScore(
+      { home: afterExtraTime[0], away: afterExtraTime[1] },
+      { home: score.p[0], away: score.p[1] },
+    );
+
+    return {
+      homeScore: combined.home,
+      awayScore: combined.away,
+      status: "finished",
+      source: "openfootball",
+    };
   }
 
   if (score.ft) {

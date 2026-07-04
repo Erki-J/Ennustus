@@ -1,4 +1,5 @@
 import { matchesTeamName } from "@/lib/cron/scores/team-names";
+import { combineKnockoutScore } from "@/lib/scoring/knockout-score";
 import type { ExternalMatchScore } from "@/lib/cron/scores/external-score";
 
 export type ApiFootballFixture = {
@@ -18,6 +19,8 @@ export type ApiFootballFixture = {
   score?: {
     halftime?: { home: number | null; away: number | null };
     fulltime?: { home: number | null; away: number | null };
+    extratime?: { home: number | null; away: number | null };
+    penalty?: { home: number | null; away: number | null };
   };
   teams: {
     home: { name: string };
@@ -97,11 +100,46 @@ function readFixtureScore(
   return { home, away };
 }
 
+function readKicktippFixtureScore(
+  fixture: ApiFootballFixture,
+): { home: number; away: number } | null {
+  const ft = fixture.score?.fulltime;
+  const et = fixture.score?.extratime;
+  const pen = fixture.score?.penalty;
+
+  let baseHome: number | null = null;
+  let baseAway: number | null = null;
+
+  if (et?.home != null && et?.away != null) {
+    baseHome = et.home;
+    baseAway = et.away;
+  } else if (ft?.home != null && ft?.away != null) {
+    baseHome = ft.home;
+    baseAway = ft.away;
+  } else {
+    const fallback = readFixtureScore(fixture);
+    if (!fallback) {
+      return null;
+    }
+    baseHome = fallback.home;
+    baseAway = fallback.away;
+  }
+
+  if (pen?.home != null && pen?.away != null) {
+    return combineKnockoutScore(
+      { home: baseHome, away: baseAway },
+      { home: pen.home, away: pen.away },
+    );
+  }
+
+  return { home: baseHome, away: baseAway };
+}
+
 function parseApiFootballScore(
   fixture: ApiFootballFixture,
 ): ExternalMatchScore | null {
   const statusShort = fixture.fixture.status.short;
-  const parsed = readFixtureScore(fixture);
+  const parsed = readKicktippFixtureScore(fixture);
 
   if (FINISHED_STATUSES.has(statusShort)) {
     if (!parsed) {

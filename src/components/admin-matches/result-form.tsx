@@ -32,6 +32,9 @@ export function AdminMatchResultForm({
           {formatMatchTeams(match.home_team, match.away_team, locale)}
         </p>
         <p className="text-xs text-zinc-500">{kickoffLabel}</p>
+        {match.stage !== "group" && (
+          <p className="mt-1 text-xs text-amber-700">{t("admin.knockoutScoreHint")}</p>
+        )}
       </div>
       <div className="flex items-center gap-1">
         <input

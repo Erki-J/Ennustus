@@ -323,6 +323,8 @@ export const en = {
     enterResults: "Enter the actual score. Points are calculated automatically.",
     noMatchesRound: "No matches on this matchday.",
     saveResult: "Save result",
+    knockoutScoreHint:
+      "Knockout match: enter extra-time score plus penalties (Kicktipp style, e.g. 1:1 ET + 3:4 pens → 4:5).",
     loadError: "Failed to load match results",
     serverError: "Server error. Try reloading the page.",
     errorResultRequired: "Please enter a result.",
