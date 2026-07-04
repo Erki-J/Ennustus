@@ -564,7 +564,12 @@ export async function triggerCronSyncNow(
   revalidatePath(`/groups/${groupId}/bonus-results`);
   revalidatePath(`/groups/${groupId}/general-overview`);
 
-  const detail = result.details.at(-1);
+  const bracketDetails = result.details.filter(
+    (line) => line.startsWith("Mäng ") || line.startsWith("Bracket:"),
+  );
+  const detail = (bracketDetails.length > 0 ? bracketDetails : result.details)
+    .slice(0, 2)
+    .join(" ");
   const summary = t("settings.cronSyncDone", {
     live: result.matchesUpdated,
     scores: result.scoresUpdated,

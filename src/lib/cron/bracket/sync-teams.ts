@@ -258,13 +258,35 @@ export function buildKnockoutUpdates(
   return updates;
 }
 
-/** Diagnostika: miks knockout placeholderid veel tühjad on. */
+function isSourceMatchReady(source: Match): boolean {
+  return (
+    !isTeamPlaceholder(source.home_team) &&
+    !isTeamPlaceholder(source.away_team)
+  );
+}
+
+function resolveBracketSlotResult(
+  slot: BracketSlot,
+  source: Match,
+): string | null {
+  if (slot.type === "winner") {
+    return getMatchWinner(source);
+  }
+
+  if (slot.type === "loser") {
+    return getMatchLoser(source);
+  }
+
+  return null;
+}
+
+/** Diagnostika: ainult need lüngad, mida saab praegu lahendada (allikmängul on meeskonnad). */
 export function describeBracketGaps(
   matches: Match[],
   bracket = WC2026_KNOCKOUT_BRACKET,
 ): string[] {
   const matchesByNum = indexKnockoutMatchesByBracketNum(matches, bracket);
-  const details: string[] = [];
+  const details: Array<{ kickoff: string; message: string }> = [];
 
   for (const def of bracket) {
     const match = matchesByNum.get(def.matchNum);
@@ -272,7 +294,10 @@ export function describeBracketGaps(
       continue;
     }
 
-    if (!isTeamPlaceholder(match.home_team) && !isTeamPlaceholder(match.away_team)) {
+    if (
+      !isTeamPlaceholder(match.home_team) &&
+      !isTeamPlaceholder(match.away_team)
+    ) {
       continue;
     }
 
@@ -296,23 +321,37 @@ export function describeBracketGaps(
         bracket,
       );
 
-      if (!source) {
-        details.push(
-          `Mäng ${def.matchNum} (${side}): allikmäng ${slot.matchNum} puudub`,
-        );
+      if (!source || !isSourceMatchReady(source)) {
         continue;
       }
 
-      const winner = getMatchWinner(source);
-      if (!winner) {
-        details.push(
-          `Mäng ${def.matchNum} (${side}): oota mängu ${slot.matchNum} tulemust (${source.home_team}–${source.away_team}, ${source.status})`,
-        );
+      const resolved = resolveBracketSlotResult(slot, source);
+      if (resolved) {
+        continue;
       }
+
+      const hasScore =
+        source.home_score != null && source.away_score != null;
+      const isDraw = hasScore && source.home_score === source.away_score;
+
+      if (isDraw) {
+        details.push({
+          kickoff: match.kickoff_at,
+          message: `Mäng ${def.matchNum}: oota mängu ${slot.matchNum} penaltitulemust (${source.home_team}–${source.away_team} ${source.home_score}:${source.away_score})`,
+        });
+        continue;
+      }
+
+      details.push({
+        kickoff: match.kickoff_at,
+        message: `Mäng ${def.matchNum}: oota mängu ${slot.matchNum} tulemust (${source.home_team}–${source.away_team}, ${source.status})`,
+      });
     }
   }
 
-  return details;
+  return details
+    .sort((a, b) => a.kickoff.localeCompare(b.kickoff))
+    .map((item) => item.message);
 }
 
 export async function syncKnockoutTeams(
@@ -351,7 +390,8 @@ export async function syncKnockoutTeams(
   }
 
   if (teamsUpdated === 0) {
-    details.push(...describeBracketGaps(matches));
+    const gaps = describeBracketGaps(matches);
+    details.push(...gaps.slice(0, 3));
   }
 
   return { teamsUpdated, details };
