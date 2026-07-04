@@ -15,12 +15,23 @@ export type KnockoutTeamsSyncResult = {
 };
 
 function getMatchWinner(match: Match): string | null {
-  if (
-    match.status !== "finished" ||
-    match.home_score == null ||
-    match.away_score == null ||
-    match.home_score === match.away_score
-  ) {
+  if (match.home_score == null || match.away_score == null) {
+    return null;
+  }
+
+  if (match.home_score === match.away_score) {
+    return null;
+  }
+
+  const kickoffPassed = new Date(match.kickoff_at).getTime() <= Date.now();
+  const decided =
+    match.status === "finished" ||
+    (kickoffPassed &&
+      match.status !== "live" &&
+      match.home_score !== null &&
+      match.away_score !== null);
+
+  if (!decided) {
     return null;
   }
 
@@ -28,27 +39,78 @@ function getMatchWinner(match: Match): string | null {
 }
 
 function getMatchLoser(match: Match): string | null {
-  if (
-    match.status !== "finished" ||
-    match.home_score == null ||
-    match.away_score == null ||
-    match.home_score === match.away_score
-  ) {
+  if (match.home_score == null || match.away_score == null) {
+    return null;
+  }
+
+  if (match.home_score === match.away_score) {
+    return null;
+  }
+
+  const kickoffPassed = new Date(match.kickoff_at).getTime() <= Date.now();
+  const decided =
+    match.status === "finished" ||
+    (kickoffPassed &&
+      match.status !== "live" &&
+      match.home_score !== null &&
+      match.away_score !== null);
+
+  if (!decided) {
     return null;
   }
 
   return match.home_score > match.away_score ? match.away_team : match.home_team;
 }
 
+function teamsMatchPair(
+  match: Match,
+  home: string,
+  away: string,
+): boolean {
+  return (
+    (match.home_team === home && match.away_team === away) ||
+    (match.home_team === away && match.away_team === home)
+  );
+}
+
+function findBracketSourceMatch(
+  matchNum: number,
+  matchesByNum: Map<number, Match>,
+  allMatches: Match[],
+  bracket: typeof WC2026_KNOCKOUT_BRACKET,
+): Match | undefined {
+  const mapped = matchesByNum.get(matchNum);
+  const def = bracket.find((item) => item.matchNum === matchNum);
+
+  if (!def || def.home.type !== "team" || def.away.type !== "team") {
+    return mapped;
+  }
+
+  const homeName = def.home.name;
+  const awayName = def.away.name;
+
+  if (mapped && teamsMatchPair(mapped, homeName, awayName)) {
+    return mapped;
+  }
+
+  return allMatches.find(
+    (match) =>
+      match.stage === "round_32" &&
+      teamsMatchPair(match, homeName, awayName),
+  );
+}
+
 function resolveBracketSlot(
   slot: BracketSlot,
   matchesByNum: Map<number, Match>,
+  allMatches: Match[],
+  bracket: typeof WC2026_KNOCKOUT_BRACKET,
 ): string | null {
   if (slot.type === "team") {
     return slot.name;
   }
 
-  const source = matchesByNum.get(slot.matchNum);
+  const source = findBracketSourceMatch(slot.matchNum, matchesByNum, allMatches, bracket);
   if (!source) {
     return null;
   }
@@ -83,12 +145,40 @@ const KNOCKOUT_STAGE_RANGES: Array<{ stage: string; start: number; end: number }
 
 export function indexKnockoutMatchesByBracketNum(
   matches: Match[],
+  bracket = WC2026_KNOCKOUT_BRACKET,
 ): Map<number, Match> {
   const bySortOrder = new Map<number, Match>();
 
   for (const match of matches) {
     if (match.sort_order >= 73) {
       bySortOrder.set(match.sort_order, match);
+    }
+  }
+
+  for (const def of bracket) {
+    if (def.matchNum < 73 || def.matchNum > 88) {
+      continue;
+    }
+    if (def.home.type !== "team" || def.away.type !== "team") {
+      continue;
+    }
+
+    const homeName = def.home.name;
+    const awayName = def.away.name;
+
+    const mapped = bySortOrder.get(def.matchNum);
+    if (mapped && teamsMatchPair(mapped, homeName, awayName)) {
+      continue;
+    }
+
+    const found = matches.find(
+      (match) =>
+        match.stage === "round_32" &&
+        teamsMatchPair(match, homeName, awayName),
+    );
+
+    if (found) {
+      bySortOrder.set(def.matchNum, found);
     }
   }
 
@@ -118,7 +208,7 @@ export function buildKnockoutUpdates(
   matches: Match[],
   bracket = WC2026_KNOCKOUT_BRACKET,
 ): Array<{ matchId: string; home_team?: string; away_team?: string; label: string }> {
-  const matchesByNum = indexKnockoutMatchesByBracketNum(matches);
+  const matchesByNum = indexKnockoutMatchesByBracketNum(matches, bracket);
 
   const updates: Array<{
     matchId: string;
@@ -133,8 +223,8 @@ export function buildKnockoutUpdates(
       continue;
     }
 
-    const resolvedHome = resolveBracketSlot(def.home, matchesByNum);
-    const resolvedAway = resolveBracketSlot(def.away, matchesByNum);
+    const resolvedHome = resolveBracketSlot(def.home, matchesByNum, matches, bracket);
+    const resolvedAway = resolveBracketSlot(def.away, matchesByNum, matches, bracket);
     const patch: { home_team?: string; away_team?: string } = {};
 
     if (
@@ -166,6 +256,63 @@ export function buildKnockoutUpdates(
   }
 
   return updates;
+}
+
+/** Diagnostika: miks knockout placeholderid veel tühjad on. */
+export function describeBracketGaps(
+  matches: Match[],
+  bracket = WC2026_KNOCKOUT_BRACKET,
+): string[] {
+  const matchesByNum = indexKnockoutMatchesByBracketNum(matches, bracket);
+  const details: string[] = [];
+
+  for (const def of bracket) {
+    const match = matchesByNum.get(def.matchNum);
+    if (!match) {
+      continue;
+    }
+
+    if (!isTeamPlaceholder(match.home_team) && !isTeamPlaceholder(match.away_team)) {
+      continue;
+    }
+
+    for (const [side, slot] of [
+      ["home", def.home],
+      ["away", def.away],
+    ] as const) {
+      if (slot.type !== "winner" && slot.type !== "loser") {
+        continue;
+      }
+
+      const current = side === "home" ? match.home_team : match.away_team;
+      if (!isTeamPlaceholder(current)) {
+        continue;
+      }
+
+      const source = findBracketSourceMatch(
+        slot.matchNum,
+        matchesByNum,
+        matches,
+        bracket,
+      );
+
+      if (!source) {
+        details.push(
+          `Mäng ${def.matchNum} (${side}): allikmäng ${slot.matchNum} puudub`,
+        );
+        continue;
+      }
+
+      const winner = getMatchWinner(source);
+      if (!winner) {
+        details.push(
+          `Mäng ${def.matchNum} (${side}): oota mängu ${slot.matchNum} tulemust (${source.home_team}–${source.away_team}, ${source.status})`,
+        );
+      }
+    }
+  }
+
+  return details;
 }
 
 export async function syncKnockoutTeams(
@@ -201,6 +348,10 @@ export async function syncKnockoutTeams(
 
     teamsUpdated += Object.keys(patch).length;
     details.push(`Bracket: ${label}`);
+  }
+
+  if (teamsUpdated === 0) {
+    details.push(...describeBracketGaps(matches));
   }
 
   return { teamsUpdated, details };
