@@ -33,6 +33,11 @@ export function SettingsSubNav({
             hrefSuffix: "/predictions",
             label: t("settingsNav.predictions"),
           },
+          {
+            key: "members",
+            hrefSuffix: "/members",
+            label: t("settingsNav.members"),
+          },
           { key: "cron", hrefSuffix: "/cron", label: t("settingsNav.cron") },
         ]
       : []),

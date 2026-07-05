@@ -55,6 +55,7 @@ export type GroupMember = {
   role: GroupMemberRole;
   nickname: string;
   joined_at: string;
+  is_managed: boolean;
 };
 
 export type GroupInvitation = {

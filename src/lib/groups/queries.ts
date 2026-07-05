@@ -126,7 +126,7 @@ export async function getGroupById(groupId: string) {
 
   const { data: members } = await supabase
     .from("group_members")
-    .select("id, nickname, role, joined_at, user_id")
+    .select("id, nickname, role, joined_at, user_id, is_managed")
     .eq("group_id", groupId)
     .order("joined_at");
 

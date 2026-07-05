@@ -55,6 +55,7 @@ export const et = {
     general: "Üldine",
     scoring: "Punktireeglid",
     predictions: "Muuda mängijate ennustusi",
+    members: "Mängijad",
     cron: "Cron",
   },
   header: {
@@ -312,6 +313,24 @@ export const et = {
     saveCron: "Salvesta cron seaded",
     cronUpdated: "Cron seaded uuendatud.",
     errorInvalidCron: "Palun sisesta kehtivad väärtused.",
+  },
+  settingsMembers: {
+    pageTitle: "Mängijad",
+    pageSubtitle: "Lisa mängijaid e-mailiga või ilma e-mailita (admin sisestab ennustused).",
+    title: "Lisa mängija",
+    subtitle: "Vali, kas mängija liitub e-maili kutsega või jääb admini hallatavaks.",
+    modeEmail: "E-mailiga kutse",
+    modeManaged: "Ilma e-mailita",
+    managedNickname: "Mängijanimi",
+    managedNicknamePlaceholder: "nt. Composer",
+    managedHint:
+      "Mängijal pole kontot ega e-maili. Ennustused sisestad Seaded → Muuda mängijate ennustusi.",
+    managedAdd: "Lisa mängija",
+    managedAdding: "Lisan…",
+    managedAdded: "Mängija {nickname} lisatud.",
+    managedBadge: "Admini hallatav",
+    errorNicknameTaken: "See mängijanimi on selles grupis juba kasutusel.",
+    errorCreateFailed: "Mängija loomine ebaõnnestus.",
   },
   admin: {
     matchesTitle: "Mängude tulemused",

@@ -55,6 +55,7 @@ export const en = {
     general: "General",
     scoring: "Scoring rules",
     predictions: "Edit player predictions",
+    members: "Players",
     cron: "Cron",
   },
   header: {
@@ -315,6 +316,24 @@ export const en = {
     saveCron: "Save cron settings",
     cronUpdated: "Cron settings updated.",
     errorInvalidCron: "Please enter valid values.",
+  },
+  settingsMembers: {
+    pageTitle: "Players",
+    pageSubtitle: "Add players by email invite or without email (admin enters predictions).",
+    title: "Add player",
+    subtitle: "Choose whether the player joins via email invite or is managed by admin.",
+    modeEmail: "Email invite",
+    modeManaged: "Without email",
+    managedNickname: "Player name",
+    managedNicknamePlaceholder: "e.g. Composer",
+    managedHint:
+      "No account or email. Enter predictions under Settings → Edit player predictions.",
+    managedAdd: "Add player",
+    managedAdding: "Adding…",
+    managedAdded: "Player {nickname} added.",
+    managedBadge: "Admin-managed",
+    errorNicknameTaken: "This player name is already used in this group.",
+    errorCreateFailed: "Could not create player.",
   },
   admin: {
     matchesTitle: "Match results",

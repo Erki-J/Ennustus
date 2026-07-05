@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getTranslations } from "@/lib/i18n/server";
+import {
+  createManagedAuthUser,
+  deleteManagedAuthUser,
+} from "@/lib/groups/managed-members";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type GroupActionState = {
@@ -126,6 +131,7 @@ export async function inviteToGroup(
   }
 
   revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/settings/members`);
   return {
     success:
       emails.length === 1
@@ -182,6 +188,14 @@ export async function removeGroupMember(
   }
 
   const supabase = await createClient();
+
+  const { data: targetMember } = await supabase
+    .from("group_members")
+    .select("is_managed")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
   const { error } = await supabase.rpc("remove_group_member", {
     p_group_id: groupId,
     p_user_id: userId,
@@ -191,9 +205,94 @@ export async function removeGroupMember(
     return { error: error.message };
   }
 
+  if (targetMember?.is_managed) {
+    const deleteError = await deleteManagedAuthUser(userId);
+    if (deleteError) {
+      return { error: deleteError };
+    }
+  }
+
   revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/settings/members`);
   revalidatePath("/dashboard");
   return { success: t("group.removeSuccess") };
+}
+
+export async function addManagedGroupMember(
+  _prevState: GroupActionState,
+  formData: FormData,
+): Promise<GroupActionState> {
+  const t = await getTranslations();
+  const groupId = String(formData.get("group_id") ?? "").trim();
+  const nickname = String(formData.get("nickname") ?? "").trim();
+
+  if (!groupId || !nickname) {
+    return { error: t("group.errorNicknameRequired") };
+  }
+
+  if (nickname.length < 2) {
+    return { error: t("group.errorNicknameLength") };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: t("group.errorMustLogin") };
+  }
+
+  const { data: membership } = await supabase
+    .from("group_members")
+    .select("role")
+    .eq("group_id", groupId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (membership?.role !== "admin") {
+    return { error: t("group.errorAdminOnly") };
+  }
+
+  const { data: existingNickname } = await supabase
+    .from("group_members")
+    .select("id")
+    .eq("group_id", groupId)
+    .ilike("nickname", nickname)
+    .maybeSingle();
+
+  if (existingNickname) {
+    return { error: t("settingsMembers.errorNicknameTaken") };
+  }
+
+  const { userId, error: createError } = await createManagedAuthUser(nickname);
+  if (createError || !userId) {
+    return { error: createError ?? t("settingsMembers.errorCreateFailed") };
+  }
+
+  const admin = createAdminClient();
+  if (!admin) {
+    await deleteManagedAuthUser(userId);
+    return { error: t("settingsMembers.errorCreateFailed") };
+  }
+
+  const { error: memberError } = await admin.from("group_members").insert({
+    group_id: groupId,
+    user_id: userId,
+    role: "member",
+    nickname,
+    is_managed: true,
+  });
+
+  if (memberError) {
+    await deleteManagedAuthUser(userId);
+    return { error: memberError.message };
+  }
+
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/settings/members`);
+  revalidatePath(`/groups/${groupId}/settings/predictions`);
+  return { success: t("settingsMembers.managedAdded", { nickname }) };
 }
 
 export async function revokeInvitation(
