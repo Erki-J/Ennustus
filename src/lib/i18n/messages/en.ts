@@ -334,6 +334,9 @@ export const en = {
     managedBadge: "Admin-managed",
     errorNicknameTaken: "This player name is already used in this group.",
     errorCreateFailed: "Could not create player.",
+    fillPredictions: "Fill predictions",
+    fillingPredictions: "Filling…",
+    predictionsFilled: "Added {matches} matches and {bonus} bonus answers.",
   },
   admin: {
     matchesTitle: "Match results",

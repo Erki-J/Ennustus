@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useActionState } from "react";
 import { InviteForm } from "@/components/invite-form";
 import { RemoveMemberButton } from "@/components/remove-member-button";
+import { FillManagedPredictionsButton } from "@/components/settings/fill-managed-predictions-button";
 import {
   addManagedGroupMember,
   type GroupActionState,
@@ -159,10 +160,17 @@ export function SettingsMembersManagement({
                   </span>
                 )}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-zinc-500">
                   {member.role === "admin" ? t("common.admin") : t("common.player")}
                 </span>
+                {member.is_managed && (
+                  <FillManagedPredictionsButton
+                    groupId={groupId}
+                    userId={member.user_id}
+                    nickname={member.nickname}
+                  />
+                )}
                 {member.role !== "admin" && member.user_id !== currentUserId && (
                   <RemoveMemberButton
                     groupId={groupId}

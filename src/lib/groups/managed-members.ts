@@ -53,3 +53,33 @@ export async function deleteManagedAuthUser(userId: string): Promise<string | nu
   const { error } = await admin.auth.admin.deleteUser(userId);
   return error?.message ?? null;
 }
+
+export async function insertManagedGroupMember(
+  admin: NonNullable<ReturnType<typeof createAdminClient>>,
+  payload: { group_id: string; user_id: string; nickname: string },
+): Promise<{ error: string | null }> {
+  const withFlag = await admin.from("group_members").insert({
+    group_id: payload.group_id,
+    user_id: payload.user_id,
+    role: "member",
+    nickname: payload.nickname,
+    is_managed: true,
+  });
+
+  if (!withFlag.error) {
+    return { error: null };
+  }
+
+  if (!/is_managed/i.test(withFlag.error.message)) {
+    return { error: withFlag.error.message };
+  }
+
+  const withoutFlag = await admin.from("group_members").insert({
+    group_id: payload.group_id,
+    user_id: payload.user_id,
+    role: "member",
+    nickname: payload.nickname,
+  });
+
+  return { error: withoutFlag.error?.message ?? null };
+}

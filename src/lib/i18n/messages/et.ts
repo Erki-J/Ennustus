@@ -331,6 +331,9 @@ export const et = {
     managedBadge: "Admini hallatav",
     errorNicknameTaken: "See mängijanimi on selles grupis juba kasutusel.",
     errorCreateFailed: "Mängija loomine ebaõnnestus.",
+    fillPredictions: "Täida ennustused",
+    fillingPredictions: "Täidan…",
+    predictionsFilled: "Lisatud {matches} mängu ja {bonus} boonusvastust.",
   },
   admin: {
     matchesTitle: "Mängude tulemused",

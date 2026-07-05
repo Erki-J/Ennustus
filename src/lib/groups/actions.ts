@@ -6,7 +6,9 @@ import { getTranslations } from "@/lib/i18n/server";
 import {
   createManagedAuthUser,
   deleteManagedAuthUser,
+  insertManagedGroupMember,
 } from "@/lib/groups/managed-members";
+import { fillManagedMemberPredictions } from "@/lib/groups/fill-managed-predictions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -276,23 +278,65 @@ export async function addManagedGroupMember(
     return { error: t("settingsMembers.errorCreateFailed") };
   }
 
-  const { error: memberError } = await admin.from("group_members").insert({
+  const { error: memberError } = await insertManagedGroupMember(admin, {
     group_id: groupId,
     user_id: userId,
-    role: "member",
     nickname,
-    is_managed: true,
   });
 
   if (memberError) {
     await deleteManagedAuthUser(userId);
-    return { error: memberError.message };
+    return { error: memberError };
+  }
+
+  const fillResult = await fillManagedMemberPredictions(groupId, userId);
+
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/settings/members`);
+  revalidatePath(`/groups/${groupId}/settings/predictions`);
+  revalidatePath(`/groups/${groupId}/overview`, "layout");
+  revalidatePath(`/groups/${groupId}/prediction-centre`, "layout");
+
+  const fillNote =
+    fillResult.matchesFilled > 0
+      ? ` ${fillResult.matchesFilled} mängu ennustus lisatud.`
+      : "";
+
+  return {
+    success: `${t("settingsMembers.managedAdded", { nickname })}${fillNote}`,
+  };
+}
+
+export async function fillManagedMemberPredictionsAction(
+  _prevState: GroupActionState,
+  formData: FormData,
+): Promise<GroupActionState> {
+  const t = await getTranslations();
+  const groupId = String(formData.get("group_id") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+
+  if (!groupId || !userId) {
+    return { error: t("group.errorMemberMissing") };
+  }
+
+  const result = await fillManagedMemberPredictions(groupId, userId);
+
+  if (result.errors.length > 0 && result.matchesFilled === 0) {
+    return { error: result.errors[0] };
   }
 
   revalidatePath(`/groups/${groupId}`);
   revalidatePath(`/groups/${groupId}/settings/members`);
   revalidatePath(`/groups/${groupId}/settings/predictions`);
-  return { success: t("settingsMembers.managedAdded", { nickname }) };
+  revalidatePath(`/groups/${groupId}/overview`, "layout");
+  revalidatePath(`/groups/${groupId}/prediction-centre`, "layout");
+
+  return {
+    success: t("settingsMembers.predictionsFilled", {
+      matches: result.matchesFilled,
+      bonus: result.bonusFilled,
+    }),
+  };
 }
 
 export async function revokeInvitation(
