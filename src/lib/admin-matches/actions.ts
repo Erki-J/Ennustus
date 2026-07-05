@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { syncKnockoutTeams } from "@/lib/cron/bracket/sync-teams";
+import { syncManagedPlayerPredictionsForGroups } from "@/lib/groups/fill-managed-predictions";
 import { getTranslations } from "@/lib/i18n/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -69,6 +70,21 @@ async function propagateKnockoutTeams(matchId: string) {
   }
 
   await syncKnockoutTeams(admin, tournament.slug, matches as Match[]);
+
+  if (tournament.slug === "wc-2026") {
+    const { data: groups } = await admin
+      .from("prediction_groups")
+      .select("id")
+      .eq("tournament_id", matchRow.tournament_id);
+
+    if (groups?.length) {
+      await syncManagedPlayerPredictionsForGroups(
+        admin,
+        groups.map((group) => group.id),
+        matchRow.tournament_id,
+      );
+    }
+  }
 }
 
 export async function saveMatchResult(formData: FormData) {

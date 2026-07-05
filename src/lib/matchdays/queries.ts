@@ -3,6 +3,7 @@ import {
   buildKnockoutUpdates,
   syncKnockoutTeams,
 } from "@/lib/cron/bracket/sync-teams";
+import { syncManagedPlayerPredictionsForGroups } from "@/lib/groups/fill-managed-predictions";
 import {
   matchdayLabel,
   matchdayParam,
@@ -90,11 +91,22 @@ async function ensureKnockoutTeamsSynced(tournamentId: string, slug: string | nu
   const typedMatches = matches as Match[];
   const pending = buildKnockoutUpdates(typedMatches);
 
-  if (pending.length === 0) {
-    return;
+  if (pending.length > 0) {
+    await syncKnockoutTeams(admin, slug, typedMatches);
   }
 
-  await syncKnockoutTeams(admin, slug, typedMatches);
+  const { data: groups } = await admin
+    .from("prediction_groups")
+    .select("id")
+    .eq("tournament_id", tournamentId);
+
+  if (groups?.length) {
+    await syncManagedPlayerPredictionsForGroups(
+      admin,
+      groups.map((group) => group.id),
+      tournamentId,
+    );
+  }
 }
 
 export function resolveMatchdayRound(

@@ -1,5 +1,6 @@
 import { syncKnockoutTeams } from "@/lib/cron/bracket/sync-teams";
 import { syncTournamentBonusResults } from "@/lib/cron/bonus/sync-bonus";
+import { syncManagedPlayerPredictionsForGroups } from "@/lib/groups/fill-managed-predictions";
 import { parseCronSettings } from "@/lib/cron/settings";
 import { syncTournamentScores } from "@/lib/cron/scores/sync-scores";
 import {
@@ -304,6 +305,18 @@ export async function runCronSync(options?: { force?: boolean }): Promise<CronSy
 
       if (refreshedMatches) {
         workingMatches = refreshedMatches as Match[];
+      }
+    }
+
+    if (tournamentSlug === "wc-2026") {
+      const managedResult = await syncManagedPlayerPredictionsForGroups(
+        admin,
+        config.groupIds,
+        tournamentId,
+      );
+
+      if (managedResult.predictionsFilled > 0) {
+        details.push(...managedResult.details);
       }
     }
 
