@@ -221,6 +221,11 @@ export const et = {
     noMatches: "Selle turniiri mänge pole andmebaasis.",
     roundTitle: "Ennustuskeskus · {round}",
     lockHint: "Ennustus lukustub mängu alguses (kickoff).",
+    drawHint:
+      "Viiki saab ennustada ainult alagrupimängudes. Väljalangemismängudes peab keegi võitma.",
+    knockoutDrawHint: "Viiki ei saa ennustada — keegi peab võitma.",
+    knockoutScoreHint:
+      "Ennusta lisaaja skoor + penaltid (Kicktippi stiil, nt 1:1 + 3:4 pen → 4:5).",
     noMatchesRound: "Sellel mängupäevadel mänge pole.",
     groupCode: "Grupp {code}",
     resultLabel: "Tulemus:",

@@ -45,6 +45,7 @@ export default async function PredictionCentreRoundPage({
             {t("predictionCentre.roundTitle", { round: round.label })}
           </h2>
           <p className="mt-1 text-sm text-zinc-600">{t("predictionCentre.lockHint")}</p>
+          <p className="mt-1 text-sm text-amber-700">{t("predictionCentre.drawHint")}</p>
         </div>
         <MatchdayNav
           basePath={`/groups/${groupId}/prediction-centre`}

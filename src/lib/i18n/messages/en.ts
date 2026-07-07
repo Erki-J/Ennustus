@@ -224,6 +224,11 @@ export const en = {
     noMatches: "No matches for this tournament in the database.",
     roundTitle: "Prediction centre · {round}",
     lockHint: "Predictions lock at kickoff.",
+    drawHint:
+      "Draws can only be predicted in group-stage matches. In knockout matches, someone must win.",
+    knockoutDrawHint: "Draws are not allowed — someone must win.",
+    knockoutScoreHint:
+      "Predict extra-time score + penalties (Kicktipp style, e.g. 1:1 + 3:4 pens → 4:5).",
     noMatchesRound: "No matches on this matchday.",
     groupCode: "Group {code}",
     resultLabel: "Result:",

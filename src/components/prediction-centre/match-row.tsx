@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/i18n/format";
 import { useLocale, useTranslations } from "@/lib/i18n/provider";
 import { formatMatchTeams } from "@/lib/i18n/teams";
 import { formatMatchScore } from "@/lib/scoring/calculate";
+import { isKnockoutStage } from "@/lib/scoring/knockout-score";
 import { getMatchResultColorClass } from "@/lib/ui/match-result";
 import type { MatchWithPrediction } from "@/lib/prediction-centre/queries";
 
@@ -100,6 +101,12 @@ export function PredictionCentreMatchRow({
                 {pending ? t("common.saving") : t("common.save")}
               </button>
             </div>
+            {isKnockoutStage(match.stage) && (
+              <div className="space-y-0.5">
+                <p className="text-xs text-amber-700">{t("predictionCentre.knockoutDrawHint")}</p>
+                <p className="text-xs text-amber-700">{t("predictionCentre.knockoutScoreHint")}</p>
+              </div>
+            )}
             {state.error && (
               <p className="text-xs text-red-600">{state.error}</p>
             )}
